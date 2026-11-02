@@ -1,7 +1,7 @@
 {
   "$schema": "https://playground.wordpress.net/blueprint-schema.json",
   "meta": {
-    "title": "Garantio - EU Legal Guarantee Notice for WooCommerce, Live Preview",
+    "title": "Plogins Legal Guarantee Notices for WooCommerce, Live Preview",
     "author": "WPPoland"
   },
   "landingPage": "/wp-admin/admin.php?page=garantio-settings",

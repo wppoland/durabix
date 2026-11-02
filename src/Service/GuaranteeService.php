@@ -97,7 +97,7 @@ final class GuaranteeService implements HasHooks
         $text   = $custom !== '' ? $custom : GuaranteeNotice::reminder((int) $this->settings['statutory_years']);
 
         echo '<div class="garantio-guarantee-reminder" style="margin: 12px 0; padding: 10px 14px; background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 2px; font-size: 0.9em; color: #166534;">';
-        echo '<strong style="display:block; margin-bottom: 2px;">' . esc_html__('EU Statutory Legal Guarantee', 'garantio') . '</strong>';
+        echo '<strong style="display:block; margin-bottom: 2px;">' . esc_html__('EU Statutory Legal Guarantee', 'plogins-legal-guarantee-notices') . '</strong>';
         echo '<p style="margin:0;">' . esc_html($text) . '</p>';
         echo '</div>';
     }
@@ -118,12 +118,12 @@ final class GuaranteeService implements HasHooks
         }
 
         $producer = trim((string) $product->get_meta(self::META_DURABILITY_PRODUCER, true));
-        $producer = $producer !== '' ? $producer : __('The manufacturer', 'garantio');
+        $producer = $producer !== '' ? $producer : __('The manufacturer', 'plogins-legal-guarantee-notices');
 
         $labelText = GuaranteeNotice::durabilityNote($producer, $years);
 
         echo '<div class="garantio-durability-label" style="margin: 10px 0; padding: 8px 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; font-size: 0.88em; color: #1e40af;">';
-        echo '<strong>' . esc_html__('Durability Guarantee:', 'garantio') . '</strong> ';
+        echo '<strong>' . esc_html__('Durability Guarantee:', 'plogins-legal-guarantee-notices') . '</strong> ';
         echo esc_html($labelText);
         echo '</div>';
     }
@@ -153,7 +153,7 @@ final class GuaranteeService implements HasHooks
         echo '<div class="garantio-repair-score" style="margin: 8px 0; font-size: 0.88em;">';
         echo '<span style="display:inline-block; padding: 2px 8px; border-radius: 3px; font-weight: bold; color: #fff; background: ' . esc_attr($badgeColor) . ';">';
         /* translators: %s: repairability class letter, A (most repairable) to E (least repairable) */
-        printf(esc_html__('Repairability class: %s (A to E, Regulation (EU) 2023/1669)', 'garantio'), esc_html($class));
+        printf(esc_html__('Repairability class: %s (A to E, Regulation (EU) 2023/1669)', 'plogins-legal-guarantee-notices'), esc_html($class));
         echo '</span>';
         echo '</div>';
     }
@@ -170,7 +170,7 @@ final class GuaranteeService implements HasHooks
         }
 
         $tabs['garantio_guarantee'] = [
-            'title' => __('Guarantee & Durability', 'garantio'),
+            'title' => __('Guarantee & Durability', 'plogins-legal-guarantee-notices'),
             'priority' => 35,
             'callback' => [$this, 'renderTabContent'],
         ];

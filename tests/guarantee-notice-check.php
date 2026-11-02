@@ -429,7 +429,7 @@ check('repairability: field, heading and FAQ do not tie the 2023/1669 class to A
     return ! str_contains($html, '(u)');
 });
 check('description: plugin header and composer.json say "repairability class", not "score"', static function (): bool {
-    $header = (string) file_get_contents(__DIR__ . '/../garantio.php');
+    $header = (string) file_get_contents(__DIR__ . '/../plogins-legal-guarantee-notices.php');
     $composer = (string) file_get_contents(__DIR__ . '/../composer.json');
     return str_contains($header, 'repairability class badge') && str_contains($composer, 'repairability class badge')
         && ! str_contains($header . $composer, 'repairability score');
@@ -455,7 +455,7 @@ check('no "harmonised" method or CSS class on the reminder', static function ():
     return ! method_exists(GuaranteeService::class, 'renderHarmonisedNotice') && ! str_contains($src, 'garantio-harmonised-notice');
 });
 check('no unused GARANTIO_DIR / GARANTIO_URL constants', static function (): bool {
-    return ! str_contains((string) file_get_contents(__DIR__ . '/../garantio.php'), 'GARANTIO_');
+    return ! str_contains((string) file_get_contents(__DIR__ . '/../plogins-legal-guarantee-notices.php'), 'GARANTIO_');
 });
 
 echo $failed === 0 ? "\nALL GARANTIO CHECKS PASSED\n" : "\n{$failed} CHECK(S) FAILED\n";
