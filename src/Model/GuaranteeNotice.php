@@ -26,7 +26,7 @@ final class GuaranteeNotice
                 'You are entitled by law to a legal guarantee of conformity from the seller, free of charge, for at least %d year. National law may provide a longer period.',
                 'You are entitled by law to a legal guarantee of conformity from the seller, free of charge, for at least %d years. National law may provide a longer period.',
                 $years,
-                'plogins-legal-guarantee-notices'
+                'garantio'
             ),
             $years
         );
@@ -39,7 +39,7 @@ final class GuaranteeNotice
     {
         return sprintf(
             /* translators: 1: producer name, 2: duration in years */
-            __('%1$s offers a %2$d-year commercial guarantee of durability at no extra cost.', 'plogins-legal-guarantee-notices'),
+            __('%1$s offers a %2$d-year commercial guarantee of durability at no extra cost.', 'garantio'),
             $producer,
             $years
         );

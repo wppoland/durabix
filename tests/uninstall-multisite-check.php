@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-define('WP_UNINSTALL_PLUGIN', 'plogins-legal-guarantee-notices/plogins-legal-guarantee-notices.php');
+define('WP_UNINSTALL_PLUGIN', 'garantio/garantio.php');
 
 $blog    = 1;
 $deleted = [];

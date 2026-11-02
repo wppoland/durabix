@@ -1,9 +1,9 @@
 <?php
 /**
- * Plugin Name:       Plogins Legal Guarantee Notices for WooCommerce
- * Plugin URI:        https://plogins.com/plogins-legal-guarantee-notices/
+ * Plugin Name:       Garantio - EU Legal Guarantee Notice for WooCommerce
+ * Plugin URI:        https://plogins.com/garantio/
  * Description:       Legal guarantee reminder, durability guarantee note, repairability class badge and a green claims phrase check for WooCommerce product pages.
- * Version:           1.1.2
+ * Version:           1.1.1
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
@@ -11,7 +11,7 @@
  * Author URI:        https://wppoland.com
  * License:           GPL-2.0-or-later
  * License URI:       https://www.gnu.org/licenses/gpl-2.0.html
- * Text Domain:       plogins-legal-guarantee-notices
+ * Text Domain:       garantio
  * Domain Path:       /languages
  * WC requires at least: 8.0
  * WC tested up to: 11.2
@@ -25,7 +25,7 @@ namespace Garantio;
 
 defined('ABSPATH') || exit;
 
-const VERSION     = '1.1.2';
+const VERSION     = '1.1.1';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/autoload.php';
@@ -42,7 +42,7 @@ add_action('plugins_loaded', static function (): void {
     if (! class_exists('WooCommerce')) {
         add_action('admin_notices', static function (): void {
             echo '<div class="notice notice-error"><p>';
-            echo esc_html__('Plogins Legal Guarantee Notices for WooCommerce requires WooCommerce to be active.', 'plogins-legal-guarantee-notices');
+            echo esc_html__('Garantio - EU Legal Guarantee Notice for WooCommerce requires WooCommerce to be active.', 'garantio');
             echo '</p></div>';
         });
         return;
