@@ -120,6 +120,37 @@ final class SettingsPage implements HasHooks
                 </table>
                 <?php submit_button(); ?>
             </form>
+            <?php $this->renderCompanionCard(); ?>
+        </div>
+        <?php
+    }
+
+    /**
+     * Cross-recommendation card for sister plugins (Shoplex EU Compliance).
+     * Strictly scoped to the Garantio settings screen per WordPress.org Guideline 11.
+     */
+    private function renderCompanionCard(): void
+    {
+        $isShoplexActive = defined('\\Shoplex\\VERSION') || (function_exists('is_plugin_active') && (is_plugin_active('shoplex/shoplex.php') || is_plugin_active('plogins-shoplex/shoplex.php')));
+
+        ?>
+        <div class="card" style="max-width: 800px; margin-top: 24px; padding: 18px 22px;">
+            <h2 class="title" style="margin-top: 0; font-size: 15px;"><?php echo esc_html__('Complementary integration: Shoplex - EU Compliance for WooCommerce', 'garantio'); ?></h2>
+            <p style="color: #50575e; line-height: 1.5;">
+                <?php echo esc_html__('Pair Garantio legal guarantee notices with Shoplex to ensure end-to-end compliance with EU Consumer Rights, Omnibus price reduction rules, and statutory checkout disclosures.', 'garantio'); ?>
+            </p>
+            <?php if ($isShoplexActive) : ?>
+                <p style="color: #007017; font-weight: 600; margin-bottom: 0;">
+                    <span class="dashicons dashicons-yes-alt" style="vertical-align: text-bottom;"></span>
+                    <?php echo esc_html__('Shoplex is active.', 'garantio'); ?>
+                </p>
+            <?php else : ?>
+                <p style="margin-bottom: 0;">
+                    <a href="<?php echo esc_url(admin_url('plugin-install.php?s=' . rawurlencode('Shoplex - EU Compliance for WooCommerce') . '&tab=search&type=term')); ?>" class="button button-secondary">
+                        <?php echo esc_html__('Explore Shoplex EU Compliance', 'garantio'); ?> &rarr;
+                    </a>
+                </p>
+            <?php endif; ?>
         </div>
         <?php
     }
