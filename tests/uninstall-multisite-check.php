@@ -9,7 +9,7 @@
 
 declare(strict_types=1);
 
-define('WP_UNINSTALL_PLUGIN', 'garantio/garantio.php');
+define('WP_UNINSTALL_PLUGIN', 'durabix/durabix.php');
 
 $blog    = 1;
 $deleted = [];
@@ -29,11 +29,11 @@ $expected = [];
 foreach ([1, 2, 3] as $site) {
     array_push(
         $expected,
-        "{$site}:garantio_settings",
-        "{$site}:postmeta:_garantio_durability_years",
-        "{$site}:postmeta:_garantio_durability_producer",
-        "{$site}:postmeta:_garantio_repair_score",
-        "{$site}:postmeta:_garantio_exempt_guarantee"
+        "{$site}:durabix_settings",
+        "{$site}:postmeta:_durabix_durability_years",
+        "{$site}:postmeta:_durabix_durability_producer",
+        "{$site}:postmeta:_durabix_repair_score",
+        "{$site}:postmeta:_durabix_exempt_guarantee"
     );
 }
 sort($expected);

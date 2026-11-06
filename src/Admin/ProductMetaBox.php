@@ -2,11 +2,11 @@
 
 declare(strict_types=1);
 
-namespace Garantio\Admin;
+namespace Durabix\Admin;
 
-use Garantio\Contract\HasHooks;
-use Garantio\Service\GreenClaimsAuditor;
-use Garantio\Service\GuaranteeService;
+use Durabix\Contract\HasHooks;
+use Durabix\Service\GreenClaimsAuditor;
+use Durabix\Service\GuaranteeService;
 
 defined('ABSPATH') || exit;
 
@@ -32,8 +32,8 @@ final class ProductMetaBox implements HasHooks
     public function registerGreenClaimsBox(): void
     {
         add_meta_box(
-            'garantio_green_claims',
-            __('Green Claims Phrase Check', 'garantio'),
+            'durabix_green_claims',
+            __('Green Claims Phrase Check', 'durabix'),
             [$this, 'renderGreenClaimsBox'],
             'product',
             'side',
@@ -54,19 +54,19 @@ final class ProductMetaBox implements HasHooks
         if ($variations > GreenClaimsAuditor::MAX_VARIATIONS) {
             echo '<p style="margin:0 0 8px;">';
             /* translators: 1: number of variations checked, 2: number of variations the product has */
-            printf(esc_html__('Only the first %1$d of %2$d variations were checked.', 'garantio'), (int) GreenClaimsAuditor::MAX_VARIATIONS, (int) $variations);
+            printf(esc_html__('Only the first %1$d of %2$d variations were checked.', 'durabix'), (int) GreenClaimsAuditor::MAX_VARIATIONS, (int) $variations);
             echo '</p>';
         }
 
         if (empty($violations)) {
             echo '<p style="margin:0;">';
-            echo esc_html__('None of the checked phrases found. This check looks for a short list of phrases only and does not assess other environmental claims.', 'garantio');
+            echo esc_html__('None of the checked phrases found. This check looks for a short list of phrases only and does not assess other environmental claims.', 'durabix');
             echo '</p>';
             return;
         }
 
         echo '<div style="background:#fef2f2; border-left:4px solid #dc2626; padding:8px 10px; margin-bottom:8px;">';
-        echo '<strong style="color:#991b1b;">' . esc_html__('Phrases to review:', 'garantio') . '</strong>';
+        echo '<strong style="color:#991b1b;">' . esc_html__('Phrases to review:', 'durabix') . '</strong>';
         echo '<ul style="margin:6px 0 0 16px; padding:0; list-style:disc; font-size:12px; color:#7f1d1d;">';
         foreach ($violations as $v) {
             echo '<li>';
@@ -75,27 +75,27 @@ final class ProductMetaBox implements HasHooks
             echo '</li>';
         }
         echo '</ul>';
-        echo '<p style="margin:6px 0 0; font-size:12px;">' . esc_html__('A match is not a breach in itself. Point 4a does not apply when you can show recognised excellent environmental performance relevant to the claim, or when the claim is specified in clear and prominent terms on the same medium, such as the online selling interface (recital 9 of Directive (EU) 2024/825). Point 4c covers climate claims based on offsetting.', 'garantio') . '</p>';
+        echo '<p style="margin:6px 0 0; font-size:12px;">' . esc_html__('A match is not a breach in itself. Point 4a does not apply when you can show recognised excellent environmental performance relevant to the claim, or when the claim is specified in clear and prominent terms on the same medium, such as the online selling interface (recital 9 of Directive (EU) 2024/825). Point 4c covers climate claims based on offsetting.', 'durabix') . '</p>';
         echo '</div>';
     }
 
     public function renderProductFields(): void
     {
-        wp_nonce_field('garantio_save_product_fields', 'garantio_product_nonce');
+        wp_nonce_field('durabix_save_product_fields', 'durabix_product_nonce');
 
-        echo '<div class="options_group garantio-options-group">';
-        echo '<h4 style="padding-left:12px;">' . esc_html__('EU Legal Guarantee & Durability (Article 6(1)(l) and (la) of Directive 2011/83/EU)', 'garantio') . '</h4>';
+        echo '<div class="options_group durabix-options-group">';
+        echo '<h4 style="padding-left:12px;">' . esc_html__('EU Legal Guarantee & Durability (Article 6(1)(l) and (la) of Directive 2011/83/EU)', 'durabix') . '</h4>';
 
         woocommerce_wp_checkbox([
             'id' => GuaranteeService::META_EXEMPT_GUARANTEE,
-            'label' => __('Hide guarantee reminder', 'garantio'),
-            'description' => __('Hide the goods legal guarantee reminder on this product, for example a digital download or a service. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Garantio does not show.', 'garantio'),
+            'label' => __('Hide guarantee reminder', 'durabix'),
+            'description' => __('Hide the goods legal guarantee reminder on this product, for example a digital download or a service. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show.', 'durabix'),
         ]);
 
         woocommerce_wp_text_input([
             'id' => GuaranteeService::META_DURABILITY_YEARS,
-            'label' => __('Commercial Durability (Years)', 'garantio'),
-            'description' => __('Only if the producer offers a commercial guarantee of durability at no extra cost for more than 2 years (e.g. 3, 5, 10). Values of 2 or less are not saved.', 'garantio'),
+            'label' => __('Commercial Durability (Years)', 'durabix'),
+            'description' => __('Only if the producer offers a commercial guarantee of durability at no extra cost for more than 2 years (e.g. 3, 5, 10). Values of 2 or less are not saved.', 'durabix'),
             'desc_tip' => true,
             'type' => 'number',
             'custom_attributes' => ['min' => '3', 'step' => '1'],
@@ -103,18 +103,18 @@ final class ProductMetaBox implements HasHooks
 
         woocommerce_wp_text_input([
             'id' => GuaranteeService::META_DURABILITY_PRODUCER,
-            'label' => __('Producer / Brand Name', 'garantio'),
-            'description' => __('Name of the manufacturer offering the commercial durability guarantee.', 'garantio'),
+            'label' => __('Producer / Brand Name', 'durabix'),
+            'description' => __('Name of the manufacturer offering the commercial durability guarantee.', 'durabix'),
             'desc_tip' => true,
         ]);
 
         woocommerce_wp_select([
             'id' => GuaranteeService::META_REPAIR_SCORE,
-            'label' => __('Repairability Class (A - E)', 'garantio'),
-            'description' => __('Repairability class from the energy label of a smartphone or slate tablet under Delegated Regulation (EU) 2023/1669, from 20 June 2025. Article 1 excludes phones and tablets with a main display the user can roll up or unroll, and smartphones for high security communication. Leave it empty for every other product. Garantio shows the class as a badge, not in the official label format.', 'garantio'),
+            'label' => __('Repairability Class (A - E)', 'durabix'),
+            'description' => __('Repairability class from the energy label of a smartphone or slate tablet under Delegated Regulation (EU) 2023/1669, from 20 June 2025. Article 1 excludes phones and tablets with a main display the user can roll up or unroll, and smartphones for high security communication. Leave it empty for every other product. Durabix shows the class as a badge, not in the official label format.', 'durabix'),
             'desc_tip' => true,
             'options' => [
-                '' => __('None', 'garantio'),
+                '' => __('None', 'durabix'),
                 'A' => 'A',
                 'B' => 'B',
                 'C' => 'C',
@@ -129,8 +129,8 @@ final class ProductMetaBox implements HasHooks
     public function saveProductFields(int $productId): void
     {
         if (
-            ! isset($_POST['garantio_product_nonce']) ||
-            ! wp_verify_nonce(sanitize_key(wp_unslash($_POST['garantio_product_nonce'])), 'garantio_save_product_fields')
+            ! isset($_POST['durabix_product_nonce']) ||
+            ! wp_verify_nonce(sanitize_key(wp_unslash($_POST['durabix_product_nonce'])), 'durabix_save_product_fields')
         ) {
             return;
         }

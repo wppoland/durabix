@@ -21,12 +21,12 @@ function add_filter(string $tag, $callback, int $priority = 10, int $accepted_ar
 function __(string $text, string $domain = 'default'): string { return $text; }
 function add_submenu_page(string $parent, string $title, string $menu, string $cap, string $slug, $cb): void { $GLOBALS['menuCap'] = $cap; }
 
-$page = new Garantio\Admin\SettingsPage();
+$page = new Durabix\Admin\SettingsPage();
 $page->registerHooks();
 $page->registerMenu();
 
 // options.php: $capability = apply_filters("option_page_capability_{$option_page}", 'manage_options').
-$hook = 'option_page_capability_' . Garantio\Admin\SettingsPage::PAGE_SLUG;
+$hook = 'option_page_capability_' . Durabix\Admin\SettingsPage::PAGE_SLUG;
 $saveCap = isset($filters[$hook]) ? $filters[$hook]('manage_options') : 'manage_options';
 
 if ($saveCap !== $menuCap) {

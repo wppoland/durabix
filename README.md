@@ -1,4 +1,4 @@
-# Garantio - EU Legal Guarantee Notice for WooCommerce
+# Durabix - EU Legal Guarantee Notice for WooCommerce
 
 Legal guarantee reminder, commercial durability guarantee note, repairability class badge and a green claims phrase check for WooCommerce product pages.
 

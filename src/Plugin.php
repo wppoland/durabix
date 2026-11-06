@@ -2,16 +2,16 @@
 
 declare(strict_types=1);
 
-namespace Garantio;
+namespace Durabix;
 
-use Garantio\Admin\ProductMetaBox;
-use Garantio\Admin\SettingsPage;
-use Garantio\Service\GuaranteeService;
+use Durabix\Admin\ProductMetaBox;
+use Durabix\Admin\SettingsPage;
+use Durabix\Service\GuaranteeService;
 
 defined('ABSPATH') || exit;
 
 /**
- * Main plugin coordinator for Garantio.
+ * Main plugin coordinator for Durabix.
  */
 final class Plugin
 {

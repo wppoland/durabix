@@ -2,9 +2,9 @@
 
 declare(strict_types=1);
 
-namespace Garantio\Service;
+namespace Durabix\Service;
 
-use Garantio\Model\GreenClaimsRules;
+use Durabix\Model\GreenClaimsRules;
 
 defined('ABSPATH') || exit;
 
