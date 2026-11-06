@@ -2,10 +2,10 @@
 
 declare(strict_types=1);
 
-namespace Garantio\Service;
+namespace Durabix\Service;
 
-use Garantio\Contract\HasHooks;
-use Garantio\Model\GuaranteeNotice;
+use Durabix\Contract\HasHooks;
+use Durabix\Model\GuaranteeNotice;
 
 defined('ABSPATH') || exit;
 
@@ -14,12 +14,12 @@ defined('ABSPATH') || exit;
  */
 final class GuaranteeService implements HasHooks
 {
-    public const OPTION = 'garantio_settings';
+    public const OPTION = 'durabix_settings';
 
-    public const META_DURABILITY_YEARS  = '_garantio_durability_years';
-    public const META_DURABILITY_PRODUCER = '_garantio_durability_producer';
-    public const META_REPAIR_SCORE      = '_garantio_repair_score'; // repairability class A to E
-    public const META_EXEMPT_GUARANTEE  = '_garantio_exempt_guarantee'; // e.g. digital goods / services
+    public const META_DURABILITY_YEARS  = '_durabix_durability_years';
+    public const META_DURABILITY_PRODUCER = '_durabix_durability_producer';
+    public const META_REPAIR_SCORE      = '_durabix_repair_score'; // repairability class A to E
+    public const META_EXEMPT_GUARANTEE  = '_durabix_exempt_guarantee'; // e.g. digital goods / services
 
     /** Repairability classes of Delegated Regulation (EU) 2023/1669, Annex II, Table 4. */
     public const REPAIR_CLASSES = ['A', 'B', 'C', 'D', 'E'];
@@ -96,8 +96,8 @@ final class GuaranteeService implements HasHooks
         $custom = trim((string) $this->settings['custom_notice']);
         $text   = $custom !== '' ? $custom : GuaranteeNotice::reminder((int) $this->settings['statutory_years']);
 
-        echo '<div class="garantio-guarantee-reminder" style="margin: 12px 0; padding: 10px 14px; background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 2px; font-size: 0.9em; color: #166534;">';
-        echo '<strong style="display:block; margin-bottom: 2px;">' . esc_html__('EU Statutory Legal Guarantee', 'garantio') . '</strong>';
+        echo '<div class="durabix-guarantee-reminder" style="margin: 12px 0; padding: 10px 14px; background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 2px; font-size: 0.9em; color: #166534;">';
+        echo '<strong style="display:block; margin-bottom: 2px;">' . esc_html__('EU Statutory Legal Guarantee', 'durabix') . '</strong>';
         echo '<p style="margin:0;">' . esc_html($text) . '</p>';
         echo '</div>';
     }
@@ -118,12 +118,12 @@ final class GuaranteeService implements HasHooks
         }
 
         $producer = trim((string) $product->get_meta(self::META_DURABILITY_PRODUCER, true));
-        $producer = $producer !== '' ? $producer : __('The manufacturer', 'garantio');
+        $producer = $producer !== '' ? $producer : __('The manufacturer', 'durabix');
 
         $labelText = GuaranteeNotice::durabilityNote($producer, $years);
 
-        echo '<div class="garantio-durability-label" style="margin: 10px 0; padding: 8px 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; font-size: 0.88em; color: #1e40af;">';
-        echo '<strong>' . esc_html__('Durability Guarantee:', 'garantio') . '</strong> ';
+        echo '<div class="durabix-durability-label" style="margin: 10px 0; padding: 8px 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; font-size: 0.88em; color: #1e40af;">';
+        echo '<strong>' . esc_html__('Durability Guarantee:', 'durabix') . '</strong> ';
         echo esc_html($labelText);
         echo '</div>';
     }
@@ -150,10 +150,10 @@ final class GuaranteeService implements HasHooks
             default => '#dc2626',
         };
 
-        echo '<div class="garantio-repair-score" style="margin: 8px 0; font-size: 0.88em;">';
+        echo '<div class="durabix-repair-score" style="margin: 8px 0; font-size: 0.88em;">';
         echo '<span style="display:inline-block; padding: 2px 8px; border-radius: 3px; font-weight: bold; color: #fff; background: ' . esc_attr($badgeColor) . ';">';
         /* translators: %s: repairability class letter, A (most repairable) to E (least repairable) */
-        printf(esc_html__('Repairability class: %s (A to E, Regulation (EU) 2023/1669)', 'garantio'), esc_html($class));
+        printf(esc_html__('Repairability class: %s (A to E, Regulation (EU) 2023/1669)', 'durabix'), esc_html($class));
         echo '</span>';
         echo '</div>';
     }
@@ -169,8 +169,8 @@ final class GuaranteeService implements HasHooks
             return $tabs;
         }
 
-        $tabs['garantio_guarantee'] = [
-            'title' => __('Guarantee & Durability', 'garantio'),
+        $tabs['durabix_guarantee'] = [
+            'title' => __('Guarantee & Durability', 'durabix'),
             'priority' => 35,
             'callback' => [$this, 'renderTabContent'],
         ];

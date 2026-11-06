@@ -1,12 +1,12 @@
 <?php
 /**
- * Self-check for Garantio: settings defaults, reminder text, green claims
+ * Self-check for Durabix: settings defaults, reminder text, green claims
  * check, product field saving and the product tab.
  * Run: php tests/guarantee-notice-check.php
  *
  * Each check prints PASS or FAIL; the script exits 1 if any check fails.
  *
- * @package Garantio
+ * @package Durabix
  */
 
 declare(strict_types=1);
@@ -186,10 +186,10 @@ class WC_Product
     }
 }
 
-use Garantio\Admin\ProductMetaBox;
-use Garantio\Admin\SettingsPage;
-use Garantio\Service\GreenClaimsAuditor;
-use Garantio\Service\GuaranteeService;
+use Durabix\Admin\ProductMetaBox;
+use Durabix\Admin\SettingsPage;
+use Durabix\Service\GreenClaimsAuditor;
+use Durabix\Service\GuaranteeService;
 
 // ------------------- harness -------------------
 $failed = 0;
@@ -240,7 +240,7 @@ check('fresh install: isEnabled() is true before the first settings save', stati
 // 2. Product fields and green claims box do not depend on the reminder switch.
 check('reminder switched off: product fields and green claims box still register', static function (): bool {
     reset_state();
-    $GLOBALS['options']['garantio_settings'] = ['enabled' => '0'];
+    $GLOBALS['options']['durabix_settings'] = ['enabled' => '0'];
     (new ProductMetaBox(new GuaranteeService()))->registerHooks();
     return in_array('woocommerce_product_options_general_product_data', $GLOBALS['actions'], true)
         && in_array('add_meta_boxes', $GLOBALS['actions'], true);
@@ -250,7 +250,7 @@ check('reminder switched off: product fields and green claims box still register
 check('de_DE: reminder goes through one English msgid, no hardcoded German', static function (): bool {
     reset_state();
     $GLOBALS['locale'] = 'de_DE';
-    $GLOBALS['options']['garantio_settings'] = ['enabled' => '1', 'statutory_years' => 2];
+    $GLOBALS['options']['durabix_settings'] = ['enabled' => '1', 'statutory_years' => 2];
     $GLOBALS['product'] = new WC_Product();
     $s   = new GuaranteeService();
     $out = render(static fn () => $s->{reminder_method($s)}());
@@ -266,7 +266,7 @@ check('source strings: no Polish, German, Spanish or Romanian msgids in the noti
 // 12. Art. 22a(3) of Directive 2011/83/EU: general reference to a longer national period.
 check('reminder mentions that national law may provide a longer period', static function (): bool {
     reset_state();
-    $GLOBALS['options']['garantio_settings'] = ['enabled' => '1', 'statutory_years' => 2];
+    $GLOBALS['options']['durabix_settings'] = ['enabled' => '1', 'statutory_years' => 2];
     $GLOBALS['product'] = new WC_Product();
     $s   = new GuaranteeService();
     $out = render(static fn () => $s->{reminder_method($s)}());
@@ -367,40 +367,40 @@ check('green claims auditor: no strip_tags() (Plugin Check)', static function ()
 check('tab mode: exempt product with nothing to show gets no tab', static function (): bool {
     reset_state();
     $p = new WC_Product();
-    $p->meta['_garantio_exempt_guarantee'] = 'yes';
+    $p->meta['_durabix_exempt_guarantee'] = 'yes';
     $GLOBALS['product'] = $p;
     return (new GuaranteeService())->registerGuaranteeTab([]) === [];
 });
 check('tab mode: product with a reminder still gets the tab', static function (): bool {
     reset_state();
     $GLOBALS['product'] = new WC_Product();
-    return isset((new GuaranteeService())->registerGuaranteeTab([])['garantio_guarantee']);
+    return isset((new GuaranteeService())->registerGuaranteeTab([])['durabix_guarantee']);
 });
 
 $save = static function (array $post): WC_Product {
     reset_state();
     $p = new WC_Product(30);
-    $_POST = $post + ['garantio_product_nonce' => 'x'];
+    $_POST = $post + ['durabix_product_nonce' => 'x'];
     (new ProductMetaBox(new GuaranteeService()))->saveProductFields(30);
     return $p;
 };
-check('save: durability of 2 years is not stored', static fn (): bool => $save(['_garantio_durability_years' => '2'])->meta['_garantio_durability_years'] === '');
-check('save: durability of 5 years is stored', static fn (): bool => $save(['_garantio_durability_years' => '5'])->meta['_garantio_durability_years'] === 5);
-check('save: repairability class "b" is stored as "B"', static fn (): bool => $save(['_garantio_repair_score' => 'b'])->meta['_garantio_repair_score'] === 'B');
-check('save: a number such as "8.2" is not stored as a repairability class', static fn (): bool => $save(['_garantio_repair_score' => '8.2'])->meta['_garantio_repair_score'] === '');
-check('save: "F" is not a repairability class', static fn (): bool => $save(['_garantio_repair_score' => 'F'])->meta['_garantio_repair_score'] === '');
+check('save: durability of 2 years is not stored', static fn (): bool => $save(['_durabix_durability_years' => '2'])->meta['_durabix_durability_years'] === '');
+check('save: durability of 5 years is stored', static fn (): bool => $save(['_durabix_durability_years' => '5'])->meta['_durabix_durability_years'] === 5);
+check('save: repairability class "b" is stored as "B"', static fn (): bool => $save(['_durabix_repair_score' => 'b'])->meta['_durabix_repair_score'] === 'B');
+check('save: a number such as "8.2" is not stored as a repairability class', static fn (): bool => $save(['_durabix_repair_score' => '8.2'])->meta['_durabix_repair_score'] === '');
+check('save: "F" is not a repairability class', static fn (): bool => $save(['_durabix_repair_score' => 'F'])->meta['_durabix_repair_score'] === '');
 check('fields: repairability is a select of classes A to E; durability minimum is 3', static function (): bool {
     reset_state();
     render(static fn () => (new ProductMetaBox(new GuaranteeService()))->renderProductFields());
-    $options = $GLOBALS['fields']['_garantio_repair_score']['options'] ?? [];
+    $options = $GLOBALS['fields']['_durabix_repair_score']['options'] ?? [];
     return array_keys($options) === ['', 'A', 'B', 'C', 'D', 'E']
-        && ! isset($GLOBALS['fields']['_garantio_repair_score']['type'])
-        && ($GLOBALS['fields']['_garantio_durability_years']['custom_attributes']['min'] ?? '') === '3';
+        && ! isset($GLOBALS['fields']['_durabix_repair_score']['type'])
+        && ($GLOBALS['fields']['_durabix_durability_years']['custom_attributes']['min'] ?? '') === '3';
 });
 check('storefront: class B renders as a repairability class, not a score out of 10', static function (): bool {
     reset_state();
     $p = new WC_Product();
-    $p->meta['_garantio_repair_score'] = 'B';
+    $p->meta['_durabix_repair_score'] = 'B';
     $GLOBALS['product'] = $p;
     $out = render(static fn () => (new GuaranteeService())->renderRepairabilityScore());
     return str_contains($out, 'Repairability class: B') && str_contains($out, '2023/1669') && ! str_contains($out, '/ 10');
@@ -408,7 +408,7 @@ check('storefront: class B renders as a repairability class, not a score out of 
 check('storefront: a number stored by 1.0.x is not shown', static function (): bool {
     reset_state();
     $p = new WC_Product();
-    $p->meta['_garantio_repair_score'] = '8.2';
+    $p->meta['_durabix_repair_score'] = '8.2';
     $GLOBALS['product'] = $p;
     return render(static fn () => (new GuaranteeService())->renderRepairabilityScore()) === '';
 });
@@ -418,7 +418,7 @@ check('changelog: no decimal comma claim for a type=number field', static functi
 check('repairability: field, heading and FAQ do not tie the 2023/1669 class to Article 6(1)(u); they name the Art. 1 exclusions', static function (): bool {
     reset_state();
     $html = render(static fn () => (new ProductMetaBox(new GuaranteeService()))->renderProductFields());
-    $desc = (string) ($GLOBALS['fields']['_garantio_repair_score']['description'] ?? '');
+    $desc = (string) ($GLOBALS['fields']['_durabix_repair_score']['description'] ?? '');
     $readme = (string) file_get_contents(__DIR__ . '/../readme.txt');
     $faq = substr($readme, (int) strpos($readme, '= Which repairability value'), 900);
     foreach ([$desc, $faq] as $text) {
@@ -429,14 +429,14 @@ check('repairability: field, heading and FAQ do not tie the 2023/1669 class to A
     return ! str_contains($html, '(u)');
 });
 check('description: plugin header and composer.json say "repairability class", not "score"', static function (): bool {
-    $header = (string) file_get_contents(__DIR__ . '/../garantio.php');
+    $header = (string) file_get_contents(__DIR__ . '/../durabix.php');
     $composer = (string) file_get_contents(__DIR__ . '/../composer.json');
     return str_contains($header, 'repairability class badge') && str_contains($composer, 'repairability class badge')
         && ! str_contains($header . $composer, 'repairability score');
 });
 check('blueprint: the demo product with a repairability class is a smartphone or slate tablet', static function (): bool {
     $bp = (string) file_get_contents(__DIR__ . '/../.wordpress-org/blueprints/blueprint.json');
-    return ! str_contains($bp, '_garantio_repair_score') || (bool) preg_match('/set_name\(\'[^\']*(Smartphone|Tablet)/i', $bp);
+    return ! str_contains($bp, '_durabix_repair_score') || (bool) preg_match('/set_name\(\'[^\']*(Smartphone|Tablet)/i', $bp);
 });
 
 check('settings: a non-array option value does not fatal', static function (): bool {
@@ -452,11 +452,11 @@ check('settings: statutory years capped at 10', static function (): bool {
 // 8. Leftovers from the "harmonised" naming and unused globals.
 check('no "harmonised" method or CSS class on the reminder', static function (): bool {
     $src = (string) file_get_contents(__DIR__ . '/../src/Service/GuaranteeService.php');
-    return ! method_exists(GuaranteeService::class, 'renderHarmonisedNotice') && ! str_contains($src, 'garantio-harmonised-notice');
+    return ! method_exists(GuaranteeService::class, 'renderHarmonisedNotice') && ! str_contains($src, 'durabix-harmonised-notice');
 });
-check('no unused GARANTIO_DIR / GARANTIO_URL constants', static function (): bool {
-    return ! str_contains((string) file_get_contents(__DIR__ . '/../garantio.php'), 'GARANTIO_');
+check('no unused DURABIX_DIR / DURABIX_URL constants', static function (): bool {
+    return ! str_contains((string) file_get_contents(__DIR__ . '/../durabix.php'), 'DURABIX_');
 });
 
-echo $failed === 0 ? "\nALL GARANTIO CHECKS PASSED\n" : "\n{$failed} CHECK(S) FAILED\n";
+echo $failed === 0 ? "\nALL DURABIX CHECKS PASSED\n" : "\n{$failed} CHECK(S) FAILED\n";
 exit($failed === 0 ? 0 : 1);

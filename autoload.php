@@ -3,23 +3,23 @@
  * Autoloading: prefer Composer classmap when present. Fall back to a
  * minimal PSR-4 autoloader so the plugin still boots if vendor/ is absent.
  *
- * @package Garantio
+ * @package Durabix
  */
 
 declare(strict_types=1);
 
-namespace Garantio;
+namespace Durabix;
 
 defined('ABSPATH') || exit;
 
-$garantio_composer = __DIR__ . '/vendor/autoload.php';
-if (is_readable($garantio_composer)) {
-    require_once $garantio_composer;
+$durabix_composer = __DIR__ . '/vendor/autoload.php';
+if (is_readable($durabix_composer)) {
+    require_once $durabix_composer;
     return;
 }
 
 spl_autoload_register(static function (string $class): void {
-    $prefix  = 'Garantio\\';
+    $prefix  = 'Durabix\\';
     $baseDir = __DIR__ . '/src/';
 
     $len = strlen($prefix);

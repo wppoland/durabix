@@ -2,7 +2,7 @@
 
 declare(strict_types=1);
 
-namespace Garantio\Contract;
+namespace Durabix\Contract;
 
 defined('ABSPATH') || exit;
 

@@ -2,7 +2,7 @@
 /**
  * Uninstall routine: remove plugin settings and product meta.
  *
- * @package Garantio
+ * @package Durabix
  */
 
 declare(strict_types=1);
@@ -12,27 +12,27 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
 /**
  * Remove this plugin's option and product meta from the current site.
  */
-function garantio_uninstall_site(): void {
-	delete_option( 'garantio_settings' );
-	foreach ( array( '_garantio_durability_years', '_garantio_durability_producer', '_garantio_repair_score', '_garantio_exempt_guarantee' ) as $garantio_meta_key ) {
-		delete_post_meta_by_key( $garantio_meta_key );
+function durabix_uninstall_site(): void {
+	delete_option( 'durabix_settings' );
+	foreach ( array( '_durabix_durability_years', '_durabix_durability_producer', '_durabix_repair_score', '_durabix_exempt_guarantee' ) as $durabix_meta_key ) {
+		delete_post_meta_by_key( $durabix_meta_key );
 	}
 }
 
 // Options are per site, so a network uninstall has to visit every site.
 if ( is_multisite() ) {
-	$garantio_site_ids = get_sites(
+	$durabix_site_ids = get_sites(
 		array(
 			'fields' => 'ids',
 			'number' => 0,
 		)
 	);
-	foreach ( $garantio_site_ids as $garantio_site_id ) {
-		switch_to_blog( (int) $garantio_site_id );
-		garantio_uninstall_site();
+	foreach ( $durabix_site_ids as $durabix_site_id ) {
+		switch_to_blog( (int) $durabix_site_id );
+		durabix_uninstall_site();
 		restore_current_blog();
 	}
-	unset( $garantio_site_ids, $garantio_site_id );
+	unset( $durabix_site_ids, $durabix_site_id );
 } else {
-	garantio_uninstall_site();
+	durabix_uninstall_site();
 }

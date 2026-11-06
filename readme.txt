@@ -1,10 +1,10 @@
-=== Garantio - EU Legal Guarantee Notice for WooCommerce ===
+=== Durabix - EU Legal Guarantee Notice for WooCommerce ===
 Contributors: motylanogha
 Tags: woocommerce, guarantee, legal guarantee, repairability, green claims
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -16,33 +16,33 @@ Directive (EU) 2024/825 (Empowering Consumers for the Green Transition) amends D
 
 Directive (EU) 2024/825 also adds to Annex I of Directive 2005/29/EC a ban on generic environmental claims the trader cannot back with recognised excellent environmental performance (point 4a; recital 9 gives "eco-friendly", "green" and "biodegradable" as examples) and on claims that a product has a neutral, reduced or positive greenhouse gas impact based on offsetting (point 4c).
 
-Garantio adds the following to WooCommerce:
+Durabix adds the following to WooCommerce:
 
 * **Legal guarantee reminder**: Shows a text reminder of the legal guarantee of conformity (at least two years, longer where national law provides) on product pages. It is plain text, not the harmonised notice (see the FAQ).
 * **Durability guarantee note**: Shows a text note when you enter a producer commercial durability guarantee longer than two years. It is plain text, not the harmonised label (see the FAQ).
 * **Repairability class**: Shows the repairability class (A to E) you enter for a smartphone or slate tablet as a colour-coded badge (see the FAQ).
 * **Green claims check**: Scans product titles, descriptions, short descriptions, attribute values and the descriptions of up to 100 variations in the admin and flags phrases such as "climate neutral" or "eco-friendly" (English, Polish, German, Spanish) for you to review. It works in the product editor whether or not the reminder is shown.
 * **Flexible Display Options**: Position notices under the single product summary (near the price and add-to-cart button) or inside a dedicated "Guarantee & Durability" product tab.
-* **Per-product hide switch**: A checkbox on each product hides the goods reminder, for example on a digital download or a service. It is not set automatically. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Garantio does not show.
-* **No external calls**: Garantio stores nothing outside your site, makes no external requests and does not touch orders, cart or checkout, so it runs alongside HPOS and the Cart and Checkout Blocks.
+* **Per-product hide switch**: A checkbox on each product hides the goods reminder, for example on a digital download or a service. It is not set automatically. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show.
+* **No external calls**: Durabix stores nothing outside your site, makes no external requests and does not touch orders, cart or checkout, so it runs alongside HPOS and the Cart and Checkout Blocks.
 
 = Documentation and links =
 
-* **Documentation** - [plogins.com/garantio/docs/](https://plogins.com/garantio/docs/)
-* **Plugin page** - [plogins.com/garantio/](https://plogins.com/garantio/)
-* **Source code** - [github.com/wppoland/garantio](https://github.com/wppoland/garantio)
-* **Bug reports and feature requests** - [GitHub issues](https://github.com/wppoland/garantio/issues)
+* **Documentation** - [plogins.com/durabix/docs/](https://plogins.com/durabix/docs/)
+* **Plugin page** - [plogins.com/durabix/](https://plogins.com/durabix/)
+* **Source code** - [github.com/wppoland/durabix](https://github.com/wppoland/durabix)
+* **Bug reports and feature requests** - [GitHub issues](https://github.com/wppoland/durabix/issues)
 
 Reporting a security issue: email hello@wppoland.com under our coordinated disclosure policy. We confirm within two business days, assess within five, and patch a critical issue within seven days of confirming it.
 
 == Translations ==
 
-Garantio is fully translatable and ships the `garantio.pot` template. Translations are delivered by WordPress.org language packs from translate.wordpress.org.
+Durabix is fully translatable and ships the `durabix.pot` template. Translations are delivered by WordPress.org language packs from translate.wordpress.org.
 
 == Installation ==
 
 1. Ensure WooCommerce 8.0 or higher is installed and active.
-2. Install Garantio and activate it.
+2. Install Durabix and activate it.
 3. Open WooCommerce > EU Legal Guarantee to configure notice placement and statutory defaults.
 4. Edit products to add producer durability guarantee years (e.g. 3, 5, 10 years), repairability classes, or review green claims auditor alerts.
 
@@ -52,19 +52,19 @@ Garantio is fully translatable and ships the `garantio.pot` template. Translatio
 Member States had to adopt and publish the transposing measures by 27 March 2026 and apply them from 27 September 2026 (Article 4(1)). The rules bind shops through each country's transposing law: in Poland that act (Dz.U. 2026 poz. 1353) applies from 27 September 2027.
 
 = What is the harmonised notice? =
-Article 6(1)(l) of Directive 2011/83/EU (as amended by Directive (EU) 2024/825) requires a reminder of the legal guarantee of conformity, including its minimum duration of two years, "using the harmonised notice referred to in Article 22a". Its design and content are set by Commission Implementing Regulation (EU) 2025/1960: Article 1 says the notice "shall comply with the design and content set out in Annex I", Annex I note (1) says "None of the elements of the harmonised notice can be edited", and Article 3 says it applies from 27 September 2026. Garantio does not display that notice. Where a country's transposing law applies, the plugin's text reminder alone does not meet Article 6(1)(l); use the official notice from Annex I.
+Article 6(1)(l) of Directive 2011/83/EU (as amended by Directive (EU) 2024/825) requires a reminder of the legal guarantee of conformity, including its minimum duration of two years, "using the harmonised notice referred to in Article 22a". Its design and content are set by Commission Implementing Regulation (EU) 2025/1960: Article 1 says the notice "shall comply with the design and content set out in Annex I", Annex I note (1) says "None of the elements of the harmonised notice can be edited", and Article 3 says it applies from 27 September 2026. Durabix does not display that notice. Where a country's transposing law applies, the plugin's text reminder alone does not meet Article 6(1)(l); use the official notice from Annex I.
 
 = What is the harmonised label? =
-Article 6(1)(la) of Directive 2011/83/EU requires the harmonised label of Article 22a where the producer offers a commercial guarantee of durability at no additional cost, covering the entire good and lasting more than two years, and makes that known to the trader. Its design and content are set in Annex II to Implementing Regulation (EU) 2025/1960 (Article 2), applicable from the same date. Garantio shows a text note, not that label.
+Article 6(1)(la) of Directive 2011/83/EU requires the harmonised label of Article 22a where the producer offers a commercial guarantee of durability at no additional cost, covering the entire good and lasting more than two years, and makes that known to the trader. Its design and content are set in Annex II to Implementing Regulation (EU) 2025/1960 (Article 2), applicable from the same date. Durabix shows a text note, not that label.
 
 = Does the reminder fit second-hand goods? =
 Article 10(6) of Directive (EU) 2019/771 lets Member States allow a shorter period for second-hand goods, of not less than one year, when the seller and consumer agree to it. The reminder setting starts at two years, so for such products hide the reminder on the product or write your own text in Custom Notice Override.
 
-= Does Garantio protect against greenwashing penalties? =
+= Does Durabix protect against greenwashing penalties? =
 No. The green claims check matches product text against a short list of phrases linked to points 4a and 4c of Annex I to Directive 2005/29/EC (as amended by Directive (EU) 2024/825) and lists them in the product editor for review. A match is not a finding of a breach: point 4c bans climate claims only when based on offsetting, and recital 9 of Directive (EU) 2024/825 says a claim whose specification is provided in clear and prominent terms on the same medium, such as the online selling interface, is not a generic environmental claim. No match does not mean the page is compliant either, because only the listed phrases are checked.
 
 = Which repairability value can I enter? =
-The repairability class from the energy label of a smartphone or slate tablet. Commission Delegated Regulation (EU) 2023/1669 sets it from A (most repairable) to E (least repairable), applicable from 20 June 2025 (Article 8 and Annex II, Table 4). Article 1 excludes mobile phones and tablets with a flexible main display the user can roll up or unroll, and smartphones for high security communication. Leave the field empty for those and for every other product. Garantio shows the letter as a badge, not in the official label format. A number entered in Garantio 1.0.x is not shown.
+The repairability class from the energy label of a smartphone or slate tablet. Commission Delegated Regulation (EU) 2023/1669 sets it from A (most repairable) to E (least repairable), applicable from 20 June 2025 (Article 8 and Annex II, Table 4). Article 1 excludes mobile phones and tablets with a flexible main display the user can roll up or unroll, and smartphones for high security communication. Leave the field empty for those and for every other product. Durabix shows the letter as a badge, not in the official label format. A number entered in Durabix 1.0.x is not shown.
 
 == Screenshots ==
 
@@ -74,6 +74,9 @@ The repairability class from the energy label of a smartphone or slate tablet. C
 4. Settings page under WooCommerce > EU Legal Guarantee.
 
 == Changelog ==
+
+= 1.1.2 =
+* Changed: renamed from Garantio to Durabix at the request of the WordPress.org plugin review (the old name is used by warranty services). The text domain, main file and settings prefix are now durabix; nothing else changed.
 
 = 1.1.1 =
 * Fixed: a shop manager could open the settings page but saving it failed with "Sorry, you are not allowed to manage options for this site."

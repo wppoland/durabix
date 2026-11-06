@@ -1,8 +1,8 @@
 <?xml version="1.0"?>
-<ruleset name="Garantio">
+<ruleset name="Durabix">
     <description>WordPress Coding Standards - output escaping, nonces, redirects, and SQL placeholder safety. WordPress.org Plugin Check is the full compliance gate.</description>
 
-    <file>garantio.php</file>
+    <file>durabix.php</file>
     <file>uninstall.php</file>
     <file>src</file>
 
@@ -32,7 +32,7 @@
     <rule ref="WordPress.WP.I18n">
         <properties>
             <property name="text_domain" type="array">
-                <element value="garantio"/>
+                <element value="durabix"/>
             </property>
         </properties>
     </rule>
