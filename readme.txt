@@ -4,7 +4,7 @@ Tags: woocommerce, legal guarantee, garan label, harmonised notice, green claims
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.2.0
+Stable tag: 1.2.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -20,14 +20,16 @@ Durabix adds the following to WooCommerce:
 
 * **Harmonised notice**: The Commission's official colour notice on the legal guarantee of conformity, in the site language (all 24 official EU languages ship with the plugin, English for any other language). A short "Your legal guarantee rights" line opens the full, unedited notice on the first click, as in the Commission's online examples, with a link to the same Your Europe page the QR code leads to.
 * **Notice at checkout and in the confirmation email**: The same line above the place order button on the classic and the block checkout, and the notice in the processing and on-hold order emails to the customer. Each can be switched off.
-* **GARAN label**: When you enter a producer guarantee of durability over two years and the producer's name on a product, the product page shows the nested GARAN label, which opens the full label with the years, the brand and the model identifier (or the SKU) filled in. Only those three fields are editable under Annex II; the rest is the Commission's file. The label is set in Inter, which ships with the plugin.
+* **GARAN label**: When you enter a producer guarantee of durability over two years and the producer's name on a product, the product page shows the nested GARAN label, which opens the full label with the years, the brand and the model identifier (or the SKU) filled in. Only those three fields are editable under Annex II; the rest is the Commission's file. The label is set in Inter, which ships with the plugin. The brand and the model identifier take up to 40 characters each; when the two would run into each other, both are narrowed to fit the line.
 * **Repairability class**: Shows the repairability class (A to E) you enter for a smartphone or slate tablet as a colour-coded badge (see the FAQ).
 * **Green claims check**: Scans product titles, descriptions, short descriptions, attribute values and the descriptions of up to 100 variations in the admin and flags phrases such as "climate neutral" or "eco-friendly" (English, Polish, German, Spanish) for you to review. It works in the product editor whether or not the notice is shown.
 * **Display options**: The notice and label sit under the product summary (near the price and add-to-cart button) or in a "Guarantee & Durability" product tab.
 * **Per-product hide switch**: A checkbox on each product hides the notice, for example on a digital download or a service, since the notice covers goods. It is not set automatically. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show. Checkout and the email show the notice when at least one item is a good.
 * **No external calls**: The notice images, the label and the font load from your own site. Durabix sends nothing to other services; the Your Europe links are plain links. It declares compatibility with HPOS and the Cart and Checkout Blocks.
 
-What Durabix does not do: it does not show the GARAN label at checkout or in emails, has no per-variation label fields, and does not check that the producer's guarantee meets Article 17 of Directive (EU) 2019/771. Showing the notice and label does not by itself make a shop compliant.
+* **GARAN label in the confirmation email**: Article 8(7)(a) of Directive 2011/83/EU requires the confirmation of the contract to repeat the Article 6(1) information, so the processing and on-hold order emails carry each GARAN label of the order as an attached SVG file, with one line naming it in the email. It follows the order email switch.
+
+What Durabix does not do: it does not show the GARAN label at checkout, has no per-variation label fields, and does not check that the producer's guarantee meets Article 17 of Directive (EU) 2019/771. Showing the notice and label does not by itself make a shop compliant.
 
 The notice and label files are © European Union, reused under the Commission's reuse policy (Commission Decision 2011/833/EU, CC BY 4.0) and shown unchanged, as Implementing Regulation (EU) 2025/1960 requires; Durabix only fills in the three editable label fields. Durabix is not affiliated with or endorsed by the European Commission. Inter is licensed under the SIL Open Font License 1.1 (assets/fonts/OFL.txt).
 
@@ -85,6 +87,10 @@ The repairability class from the energy label of a smartphone or slate tablet. C
 7. The notice line above the place order button on the block checkout.
 
 == Changelog ==
+
+= 1.2.1 =
+* Added: the processing and on-hold order emails carry each GARAN label of the order as an attached SVG file, with one line naming it. Article 8(7)(a) of Directive 2011/83/EU requires the confirmation to repeat the Article 6(1) information, which includes the label. Variations use the label of their parent product.
+* Fixed: a long brand and a long model identifier ran into each other on the GARAN label. Both are now narrowed to fit the line, and each field takes up to 40 characters.
 
 = 1.2.0 =
 * Added: the harmonised notice on the legal guarantee of conformity in the official design of Implementing Regulation (EU) 2025/1960, Annex I, in all 24 official EU languages, on the product page, at checkout (classic and block) and in the processing and on-hold order emails. Article 6(1)(l) of Directive 2011/83/EU requires it from 27 September 2026.

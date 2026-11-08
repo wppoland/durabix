@@ -23,7 +23,17 @@ function delete_transient(string $name): void { $GLOBALS['deleted'][] = $GLOBALS
 function delete_post_meta_by_key(string $key): void { $GLOBALS['deleted'][] = $GLOBALS['blog'] . ':postmeta:' . $key; }
 function delete_metadata(string $type, int $id, string $key, string $value = '', bool $all = false): void { $GLOBALS['deleted'][] = 'user:' . $key; }
 
+function wp_upload_dir(): array { return ['basedir' => sys_get_temp_dir() . '/durabix-uninstall-' . $GLOBALS['blog']]; }
+function wp_delete_file(string $file): void { unlink($file); }
+@mkdir(sys_get_temp_dir() . '/durabix-uninstall-2/durabix', 0777, true);
+file_put_contents(sys_get_temp_dir() . '/durabix-uninstall-2/durabix/garan-x.svg', '<svg/>');
+
 require __DIR__ . '/../uninstall.php';
+
+if (is_dir(sys_get_temp_dir() . '/durabix-uninstall-2/durabix')) {
+    echo "FAIL  GARAN label files left in uploads after uninstall\n";
+    exit(1);
+}
 
 $expected = [];
 foreach ([1, 2, 3] as $site) {

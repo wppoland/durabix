@@ -115,7 +115,7 @@ final class SettingsPage implements HasHooks
                         <td>
                             <label>
                                 <input type="checkbox" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[notice_email]" value="1" <?php checked(! empty($settings['notice_email'])); ?> />
-                                <?php echo esc_html__('Add the notice to the processing and on-hold order emails sent to the customer', 'durabix'); ?>
+                                <?php echo esc_html__('Add the notice and the GARAN labels (as attached files) to the processing and on-hold order emails sent to the customer', 'durabix'); ?>
                             </label>
                         </td>
                     </tr>

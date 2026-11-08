@@ -128,6 +128,36 @@ function woocommerce_wp_select(array $args): void
     $GLOBALS['fields'][$args['id']] = $args;
 }
 
+function wp_upload_dir(): array
+{
+    return ['basedir' => $GLOBALS['uploads']];
+}
+function wp_mkdir_p(string $dir): bool
+{
+    return is_dir($dir) || mkdir($dir, 0777, true);
+}
+class WC_Order_Item_Product
+{
+    public function __construct(private ?WC_Product $product)
+    {
+    }
+    public function get_product(): ?WC_Product
+    {
+        return $this->product;
+    }
+}
+
+class WC_Order
+{
+    public function __construct(public array $items = [])
+    {
+    }
+    public function get_items(): array
+    {
+        return $this->items;
+    }
+}
+
 class WP_Post
 {
     public int $ID = 0;
@@ -315,6 +345,42 @@ check('GARAN: the two SVG templates share no element id', static function (): bo
     preg_match_all('/id="([^"]+)"/', (string) file_get_contents(__DIR__ . '/../assets/garan/label.svg'), $a);
     preg_match_all('/id="([^"]+)"/', (string) file_get_contents(__DIR__ . '/../assets/garan/nested.svg'), $b);
     return array_intersect($a[1], $b[1]) === [];
+});
+
+// 4b. GARAN in the confirmation email (Article 8(7)(a) of Directive 2011/83/EU) and text fit.
+$GLOBALS['uploads'] = sys_get_temp_dir() . '/durabix-test-' . getmypid();
+function garan_order(): WC_Order
+{
+    reset_state();
+    $parent = new WC_Product(10);
+    $parent->meta = ['_durabix_durability_years' => '5', '_durabix_durability_producer' => 'Fairline', '_durabix_model_identifier' => 'FL-6'];
+    $a = new WC_Product(11);
+    $a->parent = 10;
+    $b = new WC_Product(12);
+    $b->parent = 10;
+    return new WC_Order([new WC_Order_Item_Product($a), new WC_Order_Item_Product($b)]);
+}
+check('GARAN email: one SVG attached for two variations whose meta sits on the parent', static function (): bool {
+    $files = (new GuaranteeService())->attachGaranLabels([], 'customer_processing_order', garan_order(), null);
+    return count($files) === 1 && str_ends_with($files[0], '.svg') && str_contains((string) file_get_contents($files[0]), '>Fairline</tspan>');
+});
+check('GARAN email: nothing attached to an admin email', static fn (): bool => (new GuaranteeService())->attachGaranLabels([], 'new_order', garan_order(), null) === []);
+check('GARAN email: the body names the label and the attachment', static function (): bool {
+    $order = garan_order();
+    $email = (object) ['id' => 'customer_processing_order'];
+    $out = render(static fn () => (new GuaranteeService())->renderEmailNotice($order, false, true, $email));
+    return substr_count($out, 'GARAN label: Fairline FL-6, 5-year') === 1;
+});
+check('GARAN fit: short brand and model get no textLength', static fn (): bool => \Durabix\Model\GaranLabel::fit('Fairline', 'FL-6') === ['', '']);
+check('GARAN fit: long brand and model are squeezed into the row', static function (): bool {
+    [$b, $m] = \Durabix\Model\GaranLabel::fit(str_repeat('W', 40), str_repeat('M', 40));
+    preg_match('/textLength="([\d.]+)"/', $b, $x);
+    preg_match('/textLength="([\d.]+)"/', $m, $y);
+    return isset($x[1], $y[1]) && (float) $x[1] + (float) $y[1] <= 248.66;
+});
+check('GARAN fit: brand and model are cut at 40 characters', static function (): bool {
+    $svg = \Durabix\Model\GaranLabel::full(dirname(__DIR__), 5, str_repeat('a', 50), 'X');
+    return str_contains($svg, '>' . str_repeat('a', 40) . '</tspan>') && ! str_contains($svg, str_repeat('a', 41)) && ! str_contains($svg, '_FIT}}');
 });
 
 // 5. Green claims: Unicode, diacritics, inflected forms.
