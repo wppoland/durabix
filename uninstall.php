@@ -17,6 +17,14 @@ function durabix_uninstall_site(): void {
 	foreach ( array( '_durabix_durability_years', '_durabix_durability_producer', '_durabix_model_identifier', '_durabix_repair_score', '_durabix_exempt_guarantee' ) as $durabix_meta_key ) {
 		delete_post_meta_by_key( $durabix_meta_key );
 	}
+	// GARAN label files written for order emails.
+	$durabix_dir = wp_upload_dir()['basedir'] . '/durabix';
+	foreach ( (array) glob( $durabix_dir . '/garan-*.svg' ) as $durabix_file ) {
+		wp_delete_file( $durabix_file );
+	}
+	if ( is_dir( $durabix_dir ) ) {
+		rmdir( $durabix_dir ); // phpcs:ignore WordPress.WP.AlternativeFunctions.file_system_operations_rmdir -- empty plugin directory.
+	}
 }
 
 // Options are per site, so a network uninstall has to visit every site.

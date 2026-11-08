@@ -104,15 +104,17 @@ final class ProductMetaBox implements HasHooks
         woocommerce_wp_text_input([
             'id' => GuaranteeService::META_DURABILITY_PRODUCER,
             'label' => __('Producer / Brand Name', 'durabix'),
-            'description' => __('Name of the producer offering the commercial guarantee of durability, as printed on the GARAN label. The label shows only when this and the years are filled in.', 'durabix'),
+            'description' => __('Name of the producer offering the commercial guarantee of durability, as printed on the GARAN label. The label shows only when this and the years are filled in. Up to 40 characters.', 'durabix'),
             'desc_tip' => true,
+            'custom_attributes' => ['maxlength' => (string) \Durabix\Model\GaranLabel::MAX_CHARS],
         ]);
 
         woocommerce_wp_text_input([
             'id' => GuaranteeService::META_MODEL_IDENTIFIER,
             'label' => __('Model identifier', 'durabix'),
-            'description' => __('Model identifier for which the producer offers the guarantee, as printed on the GARAN label. Empty uses the SKU.', 'durabix'),
+            'description' => __('Model identifier for which the producer offers the guarantee, as printed on the GARAN label. Empty uses the SKU. Up to 40 characters.', 'durabix'),
             'desc_tip' => true,
+            'custom_attributes' => ['maxlength' => (string) \Durabix\Model\GaranLabel::MAX_CHARS],
         ]);
 
         woocommerce_wp_select([
@@ -153,8 +155,8 @@ final class ProductMetaBox implements HasHooks
 
         $exempt   = isset($_POST[GuaranteeService::META_EXEMPT_GUARANTEE]) ? 'yes' : 'no';
         $years    = isset($_POST[GuaranteeService::META_DURABILITY_YEARS]) ? absint(wp_unslash($_POST[GuaranteeService::META_DURABILITY_YEARS])) : 0;
-        $producer = isset($_POST[GuaranteeService::META_DURABILITY_PRODUCER]) ? sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_DURABILITY_PRODUCER])) : '';
-        $model    = isset($_POST[GuaranteeService::META_MODEL_IDENTIFIER]) ? sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_MODEL_IDENTIFIER])) : '';
+        $producer = isset($_POST[GuaranteeService::META_DURABILITY_PRODUCER]) ? mb_substr(sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_DURABILITY_PRODUCER])), 0, \Durabix\Model\GaranLabel::MAX_CHARS) : '';
+        $model    = isset($_POST[GuaranteeService::META_MODEL_IDENTIFIER]) ? mb_substr(sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_MODEL_IDENTIFIER])), 0, \Durabix\Model\GaranLabel::MAX_CHARS) : '';
         $repair   = isset($_POST[GuaranteeService::META_REPAIR_SCORE]) ? self::parseClass(sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_REPAIR_SCORE]))) : '';
 
         $product->update_meta_data(GuaranteeService::META_EXEMPT_GUARANTEE, $exempt);

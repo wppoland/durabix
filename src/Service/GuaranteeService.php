@@ -98,6 +98,7 @@ final class GuaranteeService implements HasHooks
 
         if (! empty($this->settings['notice_email'])) {
             add_action('woocommerce_email_after_order_table', [$this, 'renderEmailNotice'], 20, 4);
+            add_filter('woocommerce_email_attachments', [$this, 'attachGaranLabels'], 10, 4);
         }
     }
 
@@ -163,25 +164,121 @@ final class GuaranteeService implements HasHooks
                 break;
             }
         }
-        if (! $hasGoods) {
+        $labels = self::orderGaranLabels($order);
+        if (! $hasGoods && $labels === []) {
             return;
         }
 
         $language = HarmonisedNotice::language(determine_locale());
 
         if ($plainText) {
-            echo "\n" . esc_html__('Your legal guarantee rights', 'durabix') . ': ' . esc_url_raw(HarmonisedNotice::infoUrl($language)) . "\n";
+            if ($hasGoods) {
+                echo "\n" . esc_html__('Your legal guarantee rights', 'durabix') . ': ' . esc_url_raw(HarmonisedNotice::infoUrl($language)) . "\n";
+            }
+            foreach ($labels as $label) {
+                echo "\n" . esc_html(self::garanLine($label)) . "\n";
+            }
             return;
         }
 
-        printf(
-            '<div style="margin:0 0 24px;"><p><strong>%1$s</strong></p><p><img src="%2$s" width="600" style="max-width:100%%;height:auto;display:block;" alt="%3$s" /></p><p><a href="%4$s">%5$s</a></p></div>',
-            esc_html__('Your legal guarantee rights', 'durabix'),
-            esc_url(plugins_url(HarmonisedNotice::imageFile($language), \Durabix\PLUGIN_FILE)),
-            esc_attr__('EU harmonised notice on the legal guarantee of conformity', 'durabix'),
-            esc_url(HarmonisedNotice::infoUrl($language)),
-            esc_html__('More about your legal guarantee rights on Your Europe', 'durabix')
-        );
+        if ($hasGoods) {
+            printf(
+                '<div style="margin:0 0 24px;"><p><strong>%1$s</strong></p><p><img src="%2$s" width="600" style="max-width:100%%;height:auto;display:block;" alt="%3$s" /></p><p><a href="%4$s">%5$s</a></p></div>',
+                esc_html__('Your legal guarantee rights', 'durabix'),
+                esc_url(plugins_url(HarmonisedNotice::imageFile($language), \Durabix\PLUGIN_FILE)),
+                esc_attr__('EU harmonised notice on the legal guarantee of conformity', 'durabix'),
+                esc_url(HarmonisedNotice::infoUrl($language)),
+                esc_html__('More about your legal guarantee rights on Your Europe', 'durabix')
+            );
+        }
+        foreach ($labels as $label) {
+            echo '<p style="margin:0 0 12px;">' . esc_html(self::garanLine($label)) . '</p>';
+        }
+    }
+
+    /**
+     * The confirmation must repeat the Article 6(1) information (Article 8(7)(a) of Directive 2011/83/EU),
+     * so it carries each GARAN label as an SVG file: mail clients do not show inline SVG.
+     *
+     * @param mixed $attachments
+     * @param mixed $emailId
+     * @param mixed $order
+     * @param mixed $email
+     * @return mixed
+     */
+    public function attachGaranLabels($attachments, $emailId = '', $order = null, $email = null)
+    {
+        if (! is_array($attachments) || ! in_array($emailId, self::CONFIRMATION_EMAILS, true) || ! $order instanceof \WC_Order) {
+            return $attachments;
+        }
+
+        $labels = self::orderGaranLabels($order);
+        if ($labels === []) {
+            return $attachments;
+        }
+
+        $dir = wp_upload_dir()['basedir'] . '/durabix';
+        if (! wp_mkdir_p($dir)) {
+            return $attachments;
+        }
+
+        foreach ($labels as $key => $label) {
+            $file = $dir . '/garan-' . $key . '.svg';
+            if (is_file($file) || file_put_contents($file, GaranLabel::full(dirname(\Durabix\PLUGIN_FILE), $label['years'], $label['brand'], $label['model'])) !== false) {
+                $attachments[] = $file;
+            }
+        }
+
+        return $attachments;
+    }
+
+    /**
+     * GARAN labels of an order, one per distinct duration, brand and model.
+     *
+     * @return array<string, array{years: int, brand: string, model: string}>
+     */
+    private static function orderGaranLabels(\WC_Order $order): array
+    {
+        $labels = [];
+        foreach ($order->get_items() as $item) {
+            $product = $item instanceof \WC_Order_Item_Product ? $item->get_product() : null;
+            $label   = $product instanceof \WC_Product ? self::garan($product) : null;
+            if ($label !== null) {
+                $labels[md5($label['years'] . '|' . $label['brand'] . '|' . $label['model'])] = $label;
+            }
+        }
+
+        return $labels;
+    }
+
+    /**
+     * @param array{years: int, brand: string, model: string} $label
+     */
+    private static function garanLine(array $label): string
+    {
+        /* translators: 1: brand, 2: model identifier, 3: duration in years of the producer's commercial guarantee of durability */
+        return sprintf(__('GARAN label: %1$s %2$s, %3$d-year producer guarantee of durability. The label is attached to this email.', 'durabix'), $label['brand'], $label['model'], $label['years']);
+    }
+
+    /**
+     * The fields the GARAN label shows, or null when it does not apply. Meta sits on the parent of a variation.
+     *
+     * @return array{years: int, brand: string, model: string}|null
+     */
+    private static function garan(\WC_Product $product): ?array
+    {
+        $parent = $product->get_parent_id() > 0 ? wc_get_product($product->get_parent_id()) : null;
+        $source = $parent instanceof \WC_Product ? $parent : $product;
+
+        $years = self::durabilityYears($source);
+        $brand = trim((string) $source->get_meta(self::META_DURABILITY_PRODUCER, true));
+        if ($years === 0 || $brand === '') {
+            return null;
+        }
+
+        $model = trim((string) $source->get_meta(self::META_MODEL_IDENTIFIER, true));
+
+        return ['years' => $years, 'brand' => $brand, 'model' => $model !== '' ? $model : (string) $product->get_sku()];
     }
 
     /**
@@ -194,14 +291,11 @@ final class GuaranteeService implements HasHooks
             return;
         }
 
-        $years    = self::durabilityYears($product);
-        $producer = trim((string) $product->get_meta(self::META_DURABILITY_PRODUCER, true));
-        if ($years === 0 || $producer === '') {
+        $label = self::garan($product);
+        if ($label === null) {
             return;
         }
-
-        $model = trim((string) $product->get_meta(self::META_MODEL_IDENTIFIER, true));
-        $model = $model !== '' ? $model : (string) $product->get_sku();
+        ['years' => $years, 'brand' => $producer, 'model' => $model] = $label;
         $dir   = dirname(\Durabix\PLUGIN_FILE);
 
         /* translators: %d: duration in years of the producer's commercial guarantee of durability */
