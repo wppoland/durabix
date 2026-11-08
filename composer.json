@@ -1,6 +1,6 @@
 {
     "name": "wppoland/durabix",
-    "description": "Legal guarantee reminder, durability guarantee note, repairability class badge and green claims phrase check for WooCommerce (Directive (EU) 2024/825).",
+    "description": "EU harmonised legal guarantee notice and GARAN label (Implementing Regulation (EU) 2025/1960), repairability class badge and green claims phrase check for WooCommerce.",
     "type": "wordpress-plugin",
     "license": "GPL-2.0-or-later",
     "require": {

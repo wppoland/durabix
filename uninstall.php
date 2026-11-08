@@ -14,7 +14,7 @@ defined( 'WP_UNINSTALL_PLUGIN' ) || exit;
  */
 function durabix_uninstall_site(): void {
 	delete_option( 'durabix_settings' );
-	foreach ( array( '_durabix_durability_years', '_durabix_durability_producer', '_durabix_repair_score', '_durabix_exempt_guarantee' ) as $durabix_meta_key ) {
+	foreach ( array( '_durabix_durability_years', '_durabix_durability_producer', '_durabix_model_identifier', '_durabix_repair_score', '_durabix_exempt_guarantee' ) as $durabix_meta_key ) {
 		delete_post_meta_by_key( $durabix_meta_key );
 	}
 }

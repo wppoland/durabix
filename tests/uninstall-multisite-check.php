@@ -32,6 +32,7 @@ foreach ([1, 2, 3] as $site) {
         "{$site}:durabix_settings",
         "{$site}:postmeta:_durabix_durability_years",
         "{$site}:postmeta:_durabix_durability_producer",
+        "{$site}:postmeta:_durabix_model_identifier",
         "{$site}:postmeta:_durabix_repair_score",
         "{$site}:postmeta:_durabix_exempt_guarantee"
     );
