@@ -55,9 +55,9 @@ final class SettingsPage implements HasHooks
         $sanitized = [];
 
         $sanitized['enabled'] = ! empty($input['enabled']) ? '1' : '0';
-        $sanitized['statutory_years'] = min(10, max(2, (int) ($input['statutory_years'] ?? 2)));
         $sanitized['notice_position'] = ($input['notice_position'] ?? '') === 'tab' ? 'tab' : 'single_summary';
-        $sanitized['custom_notice'] = sanitize_text_field((string) ($input['custom_notice'] ?? ''));
+        $sanitized['notice_checkout'] = ! empty($input['notice_checkout']) ? '1' : '0';
+        $sanitized['notice_email'] = ! empty($input['notice_email']) ? '1' : '0';
 
         return $sanitized;
     }
@@ -73,26 +73,19 @@ final class SettingsPage implements HasHooks
         <div class="wrap durabix-settings-wrap">
             <h1><?php echo esc_html__('Durabix - EU Legal Guarantee & Durability Notices', 'durabix'); ?></h1>
             <p class="description">
-                <?php echo esc_html__('Legal guarantee reminder (Article 6(1)(l) of Directive 2011/83/EU), durability guarantee note (Article 6(1)(la)) and a green claims phrase check (Annex I, points 4a and 4c, of Directive 2005/29/EC). The reminder is plain text, not the harmonised notice of Implementing Regulation (EU) 2025/1960, which applies from 27 September 2026 and which this plugin does not display.', 'durabix'); ?>
+                <?php echo esc_html__('The harmonised notice on the legal guarantee of conformity and the GARAN label for a producer guarantee of durability, as required by Article 6(1)(l) and (la) of Directive 2011/83/EU from 27 September 2026, in the official design of Implementing Regulation (EU) 2025/1960, plus a green claims phrase check (Annex I, points 4a and 4c, of Directive 2005/29/EC). The notice follows the site language.', 'durabix'); ?>
             </p>
 
             <form method="post" action="options.php">
                 <?php settings_fields(self::PAGE_SLUG); ?>
                 <table class="form-table">
                     <tr>
-                        <th scope="row"><?php echo esc_html__('Enable legal guarantee reminder', 'durabix'); ?></th>
+                        <th scope="row"><?php echo esc_html__('Enable the notice and label', 'durabix'); ?></th>
                         <td>
                             <label>
                                 <input type="checkbox" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[enabled]" value="1" <?php checked(! empty($settings['enabled'])); ?> />
-                                <?php echo esc_html__('Display the legal guarantee reminder, durability note and repairability class on product pages', 'durabix'); ?>
+                                <?php echo esc_html__('Display the harmonised notice, the GARAN label and the repairability class on product pages', 'durabix'); ?>
                             </label>
-                        </td>
-                    </tr>
-                    <tr>
-                        <th scope="row"><?php echo esc_html__('Statutory Guarantee Duration', 'durabix'); ?></th>
-                        <td>
-                            <input type="number" min="2" max="10" step="1" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[statutory_years]" value="<?php echo esc_attr((string) ($settings['statutory_years'] ?? 2)); ?>" />
-                            <span><?php echo esc_html__('years (at least 2 under Article 10(1) of Directive (EU) 2019/771)', 'durabix'); ?></span>
                         </td>
                     </tr>
                     <tr>
@@ -109,12 +102,21 @@ final class SettingsPage implements HasHooks
                         </td>
                     </tr>
                     <tr>
-                        <th scope="row"><?php echo esc_html__('Custom Notice Override', 'durabix'); ?></th>
+                        <th scope="row"><?php echo esc_html__('Checkout', 'durabix'); ?></th>
                         <td>
-                            <input type="text" class="large-text" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[custom_notice]" value="<?php echo esc_attr($settings['custom_notice'] ?? ''); ?>" />
-                            <p class="description">
-                                <?php echo esc_html__('Leave empty to use the built-in reminder text. A custom text replaces the reminder in every language as typed and ignores the duration setting above.', 'durabix'); ?>
-                            </p>
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[notice_checkout]" value="1" <?php checked(! empty($settings['notice_checkout'])); ?> />
+                                <?php echo esc_html__('Show the notice above the place order button, classic and block checkout', 'durabix'); ?>
+                            </label>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><?php echo esc_html__('Order confirmation email', 'durabix'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[notice_email]" value="1" <?php checked(! empty($settings['notice_email'])); ?> />
+                                <?php echo esc_html__('Add the notice to the processing and on-hold order emails sent to the customer', 'durabix'); ?>
+                            </label>
                         </td>
                     </tr>
                 </table>
@@ -137,7 +139,7 @@ final class SettingsPage implements HasHooks
         <div class="card" style="max-width: 800px; margin-top: 24px; padding: 18px 22px;">
             <h2 class="title" style="margin-top: 0; font-size: 15px;"><?php echo esc_html__('Complementary integration: Shoplex - EU Compliance for WooCommerce', 'durabix'); ?></h2>
             <p style="color: #50575e; line-height: 1.5;">
-                <?php echo esc_html__('Pair Durabix legal guarantee notices with Shoplex to ensure end-to-end compliance with EU Consumer Rights, Omnibus price reduction rules, and statutory checkout disclosures.', 'durabix'); ?>
+                <?php echo esc_html__('Shoplex adds other EU consumer law modules, such as the Omnibus lowest price and checkout disclosures.', 'durabix'); ?>
             </p>
             <?php if ($isShoplexActive) : ?>
                 <p style="color: #007017; font-weight: 600; margin-bottom: 0;">

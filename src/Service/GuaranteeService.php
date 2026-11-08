@@ -5,24 +5,33 @@ declare(strict_types=1);
 namespace Durabix\Service;
 
 use Durabix\Contract\HasHooks;
-use Durabix\Model\GuaranteeNotice;
+use Durabix\Model\GaranLabel;
+use Durabix\Model\HarmonisedNotice;
 
 defined('ABSPATH') || exit;
 
 /**
- * Renders the legal guarantee reminder, durability guarantee note and repairability class on product pages.
+ * Shows the harmonised notice, the GARAN label and the repairability class.
+ *
+ * Article 6(1)(l) and (la) of Directive 2011/83/EU, as amended by Directive (EU) 2024/825, require
+ * the notice and the label from 27 September 2026, in the design of Implementing Regulation (EU)
+ * 2025/1960 (Articles 1 and 2, Annexes I and II).
  */
 final class GuaranteeService implements HasHooks
 {
     public const OPTION = 'durabix_settings';
 
-    public const META_DURABILITY_YEARS  = '_durabix_durability_years';
+    public const META_DURABILITY_YEARS    = '_durabix_durability_years';
     public const META_DURABILITY_PRODUCER = '_durabix_durability_producer';
-    public const META_REPAIR_SCORE      = '_durabix_repair_score'; // repairability class A to E
-    public const META_EXEMPT_GUARANTEE  = '_durabix_exempt_guarantee'; // e.g. digital goods / services
+    public const META_MODEL_IDENTIFIER    = '_durabix_model_identifier';
+    public const META_REPAIR_SCORE        = '_durabix_repair_score'; // repairability class A to E
+    public const META_EXEMPT_GUARANTEE    = '_durabix_exempt_guarantee'; // e.g. digital goods / services
 
     /** Repairability classes of Delegated Regulation (EU) 2023/1669, Annex II, Table 4. */
     public const REPAIR_CLASSES = ['A', 'B', 'C', 'D', 'E'];
+
+    /** Order emails that confirm the contract to the customer. */
+    public const CONFIRMATION_EMAILS = ['customer_processing_order', 'customer_on_hold_order'];
 
     /**
      * @var array<string, mixed>
@@ -43,9 +52,9 @@ final class GuaranteeService implements HasHooks
     {
         return [
             'enabled'         => '1',
-            'statutory_years' => (string) GuaranteeNotice::DEFAULT_STATUTORY_YEARS,
             'notice_position' => 'single_summary',
-            'custom_notice'   => '',
+            'notice_checkout' => '1',
+            'notice_email'    => '1',
         ];
     }
 
@@ -72,60 +81,140 @@ final class GuaranteeService implements HasHooks
             return;
         }
 
-        $position = (string) ($this->settings['notice_position'] ?? 'single_summary');
+        add_action('wp_enqueue_scripts', [$this, 'enqueueStyles']);
 
-        if ($position === 'single_summary') {
-            add_action('woocommerce_single_product_summary', [$this, 'renderGuaranteeReminder'], 25);
-            add_action('woocommerce_single_product_summary', [$this, 'renderDurabilityLabel'], 26);
+        if ((string) ($this->settings['notice_position'] ?? 'single_summary') === 'single_summary') {
+            add_action('woocommerce_single_product_summary', [$this, 'renderNotice'], 25);
+            add_action('woocommerce_single_product_summary', [$this, 'renderGaranLabel'], 26);
             add_action('woocommerce_single_product_summary', [$this, 'renderRepairabilityScore'], 27);
         } else {
             add_filter('woocommerce_product_tabs', [$this, 'registerGuaranteeTab']);
         }
+
+        if (! empty($this->settings['notice_checkout'])) {
+            add_action('woocommerce_review_order_before_submit', [$this, 'renderCheckoutNotice']);
+            add_filter('render_block_woocommerce/checkout-actions-block', [$this, 'prependCheckoutNotice']);
+        }
+
+        if (! empty($this->settings['notice_email'])) {
+            add_action('woocommerce_email_after_order_table', [$this, 'renderEmailNotice'], 20, 4);
+        }
     }
 
-    /**
-     * Render the legal guarantee reminder (Directive 2011/83/EU art. 6(1)(l)); plain text, not the harmonised notice of Implementing Regulation (EU) 2025/1960.
-     */
-    public function renderGuaranteeReminder(): void
+    public function enqueueStyles(): void
     {
-        global $product;
-        if (! $product instanceof \WC_Product || ! $this->showsReminder($product)) {
+        if (! (is_product() || is_checkout())) {
             return;
         }
 
-        $custom = trim((string) $this->settings['custom_notice']);
-        $text   = $custom !== '' ? $custom : GuaranteeNotice::reminder((int) $this->settings['statutory_years']);
-
-        echo '<div class="durabix-guarantee-reminder" style="margin: 12px 0; padding: 10px 14px; background: #f0fdf4; border-left: 4px solid #16a34a; border-radius: 2px; font-size: 0.9em; color: #166534;">';
-        echo '<strong style="display:block; margin-bottom: 2px;">' . esc_html__('EU Statutory Legal Guarantee', 'durabix') . '</strong>';
-        echo '<p style="margin:0;">' . esc_html($text) . '</p>';
-        echo '</div>';
+        wp_enqueue_style('durabix', plugins_url('assets/css/durabix.css', \Durabix\PLUGIN_FILE), [], \Durabix\VERSION);
     }
 
     /**
-     * Render the commercial durability guarantee note over 2 years (Directive 2011/83/EU art. 6(1)(la)); plain text, not the art. 22a harmonised label.
+     * The harmonised notice on the product page (Article 6(1)(l)).
      */
-    public function renderDurabilityLabel(): void
+    public function renderNotice(): void
+    {
+        global $product;
+        if (! $product instanceof \WC_Product || ! self::showsNotice($product)) {
+            return;
+        }
+
+        echo $this->noticeHtml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in noticeHtml().
+    }
+
+    /**
+     * Classic checkout: the notice before the place order button when the cart holds a good.
+     */
+    public function renderCheckoutNotice(): void
+    {
+        if ($this->cartHasGoods()) {
+            echo $this->noticeHtml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in noticeHtml().
+        }
+    }
+
+    /**
+     * Block checkout: the same notice above the place order button.
+     */
+    public function prependCheckoutNotice(string $content): string
+    {
+        return $this->cartHasGoods() ? $this->noticeHtml() . $content : $content;
+    }
+
+    /**
+     * The notice in the order confirmation email, the durable-medium copy of the pre-contractual information.
+     *
+     * @param mixed $order
+     * @param mixed $sentToAdmin
+     * @param mixed $plainText
+     * @param mixed $email
+     */
+    public function renderEmailNotice($order, $sentToAdmin = false, $plainText = false, $email = null): void
+    {
+        if ($sentToAdmin || ! $order instanceof \WC_Order || ! is_object($email) || ! in_array($email->id ?? '', self::CONFIRMATION_EMAILS, true)) {
+            return;
+        }
+
+        $hasGoods = false;
+        foreach ($order->get_items() as $item) {
+            $product = $item instanceof \WC_Order_Item_Product ? $item->get_product() : null;
+            if ($product instanceof \WC_Product && self::showsNotice($product)) {
+                $hasGoods = true;
+                break;
+            }
+        }
+        if (! $hasGoods) {
+            return;
+        }
+
+        $language = HarmonisedNotice::language(determine_locale());
+
+        if ($plainText) {
+            echo "\n" . esc_html__('Your legal guarantee rights', 'durabix') . ': ' . esc_url_raw(HarmonisedNotice::infoUrl($language)) . "\n";
+            return;
+        }
+
+        printf(
+            '<div style="margin:0 0 24px;"><p><strong>%1$s</strong></p><p><img src="%2$s" width="600" style="max-width:100%%;height:auto;display:block;" alt="%3$s" /></p><p><a href="%4$s">%5$s</a></p></div>',
+            esc_html__('Your legal guarantee rights', 'durabix'),
+            esc_url(plugins_url(HarmonisedNotice::imageFile($language), \Durabix\PLUGIN_FILE)),
+            esc_attr__('EU harmonised notice on the legal guarantee of conformity', 'durabix'),
+            esc_url(HarmonisedNotice::infoUrl($language)),
+            esc_html__('More about your legal guarantee rights on Your Europe', 'durabix')
+        );
+    }
+
+    /**
+     * The GARAN label where the producer offers a durability guarantee over two years (Article 6(1)(la)).
+     */
+    public function renderGaranLabel(): void
     {
         global $product;
         if (! $product instanceof \WC_Product) {
             return;
         }
 
-        $years = self::durabilityYears($product);
-        if ($years === 0) {
+        $years    = self::durabilityYears($product);
+        $producer = trim((string) $product->get_meta(self::META_DURABILITY_PRODUCER, true));
+        if ($years === 0 || $producer === '') {
             return;
         }
 
-        $producer = trim((string) $product->get_meta(self::META_DURABILITY_PRODUCER, true));
-        $producer = $producer !== '' ? $producer : __('The manufacturer', 'durabix');
+        $model = trim((string) $product->get_meta(self::META_MODEL_IDENTIFIER, true));
+        $model = $model !== '' ? $model : (string) $product->get_sku();
+        $dir   = dirname(\Durabix\PLUGIN_FILE);
 
-        $labelText = GuaranteeNotice::durabilityNote($producer, $years);
+        /* translators: %d: duration in years of the producer's commercial guarantee of durability */
+        $summary = sprintf(__('GARAN label: %d-year producer guarantee of durability. Show the full label.', 'durabix'), $years);
 
-        echo '<div class="durabix-durability-label" style="margin: 10px 0; padding: 8px 12px; background: #eff6ff; border: 1px solid #bfdbfe; border-radius: 4px; font-size: 0.88em; color: #1e40af;">';
-        echo '<strong>' . esc_html__('Durability Guarantee:', 'durabix') . '</strong> ';
-        echo esc_html($labelText);
-        echo '</div>';
+        echo '<details class="durabix-garan"><summary aria-label="' . esc_attr($summary) . '">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG shipped with the plugin; GaranLabel escapes the duration.
+        echo GaranLabel::nested($dir, $years);
+        echo '</summary><div class="durabix-garan__full">';
+        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG shipped with the plugin; GaranLabel escapes duration, brand and model.
+        echo GaranLabel::full($dir, $years, $producer, $model);
+        echo '<p><a href="' . esc_url(GaranLabel::INFO_URL) . '" target="_blank" rel="noopener">' . esc_html__('About the producer guarantee of durability on Your Europe', 'durabix') . '</a></p>';
+        echo '</div></details>';
     }
 
     /**
@@ -180,14 +269,58 @@ final class GuaranteeService implements HasHooks
 
     public function renderTabContent(): void
     {
-        $this->renderGuaranteeReminder();
-        $this->renderDurabilityLabel();
+        $this->renderNotice();
+        $this->renderGaranLabel();
         $this->renderRepairabilityScore();
     }
 
-    private function showsReminder(\WC_Product $product): bool
+    /**
+     * A short line that opens the full notice on the first click, as in the Commission's online
+     * examples, with a clickable link to the page the QR code leads to.
+     */
+    private function noticeHtml(): string
     {
-        return $product->get_meta(self::META_EXEMPT_GUARANTEE, true) !== 'yes';
+        $language = HarmonisedNotice::language(determine_locale());
+        $image    = plugins_url(HarmonisedNotice::imageFile($language), \Durabix\PLUGIN_FILE);
+
+        return sprintf(
+            '<details class="durabix-notice"><summary>%1$s</summary><div class="durabix-notice__body"><a href="%2$s" target="_blank" rel="noopener"><img src="%2$s" width="1654" height="2339" loading="lazy" alt="%3$s" /></a><p><a href="%4$s" target="_blank" rel="noopener">%5$s</a></p></div></details>',
+            esc_html__('Your legal guarantee rights', 'durabix'),
+            esc_url($image),
+            esc_attr__('EU harmonised notice on the legal guarantee of conformity', 'durabix'),
+            esc_url(HarmonisedNotice::infoUrl($language)),
+            esc_html__('More about your legal guarantee rights on Your Europe', 'durabix')
+        );
+    }
+
+    private function cartHasGoods(): bool
+    {
+        $cart = function_exists('WC') ? WC()->cart : null;
+        if (! $cart instanceof \WC_Cart) {
+            return false;
+        }
+
+        foreach ($cart->get_cart() as $item) {
+            $product = $item['data'] ?? null;
+            if ($product instanceof \WC_Product && self::showsNotice($product)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * The notice covers goods; the hide switch is for digital content, digital services and services.
+     * A variation follows its parent product, where the switch is set.
+     */
+    private static function showsNotice(\WC_Product $product): bool
+    {
+        $parentId = $product->get_parent_id();
+        $source   = $parentId > 0 ? wc_get_product($parentId) : $product;
+        $source   = $source instanceof \WC_Product ? $source : $product;
+
+        return $source->get_meta(self::META_EXEMPT_GUARANTEE, true) !== 'yes';
     }
 
     /**
@@ -212,7 +345,7 @@ final class GuaranteeService implements HasHooks
 
     private function hasContent(\WC_Product $product): bool
     {
-        return $this->showsReminder($product)
+        return self::showsNotice($product)
             || self::durabilityYears($product) > 0
             || self::repairClass($product) !== null;
     }

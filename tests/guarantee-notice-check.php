@@ -1,6 +1,6 @@
 <?php
 /**
- * Self-check for Durabix: settings defaults, reminder text, green claims
+ * Self-check for Durabix: settings defaults, harmonised notice, GARAN label, green claims
  * check, product field saving and the product tab.
  * Run: php tests/guarantee-notice-check.php
  *
@@ -12,6 +12,8 @@
 declare(strict_types=1);
 
 define('ABSPATH', __DIR__);
+define('Durabix\\PLUGIN_FILE', dirname(__DIR__) . '/durabix.php');
+define('Durabix\\VERSION', 'test');
 
 require_once __DIR__ . '/../autoload.php';
 
@@ -41,6 +43,22 @@ function esc_html(string $text): string
 function esc_attr(string $text): string
 {
     return htmlspecialchars($text, ENT_QUOTES);
+}
+function esc_attr__(string $text, string $domain = 'default'): string
+{
+    return htmlspecialchars($text, ENT_QUOTES);
+}
+function esc_url(string $url): string
+{
+    return htmlspecialchars($url, ENT_QUOTES);
+}
+function esc_url_raw(string $url): string
+{
+    return $url;
+}
+function plugins_url(string $path, string $file): string
+{
+    return 'https://shop.test/wp-content/plugins/durabix/' . $path;
 }
 function determine_locale(): string
 {
@@ -145,9 +163,19 @@ class WC_Product
     {
         $GLOBALS['products'][$id] = $this;
     }
+    public string $sku = '';
+    public int $parent = 0;
     public function get_id(): int
     {
         return $this->id;
+    }
+    public function get_parent_id(): int
+    {
+        return $this->parent;
+    }
+    public function get_sku(): string
+    {
+        return $this->sku;
     }
     public function get_meta(string $key, bool $single = true)
     {
@@ -226,51 +254,67 @@ function reset_state(): void
     $_POST               = [];
 }
 
-function reminder_method(GuaranteeService $s): string
+// 3. Harmonised notice (Article 6(1)(l) of Directive 2011/83/EU, Annex I to Regulation (EU) 2025/1960).
+function notice_html(string $locale): string
 {
-    return method_exists($s, 'renderGuaranteeReminder') ? 'renderGuaranteeReminder' : 'renderHarmonisedNotice';
+    reset_state();
+    $GLOBALS['locale']  = $locale;
+    $GLOBALS['product'] = new WC_Product();
+    return render(static fn () => (new GuaranteeService())->renderNotice());
 }
-
-// 1. Fresh install: no option stored, the reminder is on.
-check('fresh install: isEnabled() is true before the first settings save', static function (): bool {
-    reset_state();
-    return (new GuaranteeService())->isEnabled();
+check('de_DE: the German notice file and the German Your Europe page', static function (): bool {
+    $out = notice_html('de_DE');
+    return str_contains($out, 'assets/notice/notice-de.png') && str_contains($out, 'guarantees/index_de.htm');
 });
-
-// 2. Product fields and green claims box do not depend on the reminder switch.
-check('reminder switched off: product fields and green claims box still register', static function (): bool {
-    reset_state();
-    $GLOBALS['options']['durabix_settings'] = ['enabled' => '0'];
-    (new ProductMetaBox(new GuaranteeService()))->registerHooks();
-    return in_array('woocommerce_product_options_general_product_data', $GLOBALS['actions'], true)
-        && in_array('add_meta_boxes', $GLOBALS['actions'], true);
+check('pl_PL: the Polish notice file', static fn (): bool => str_contains(notice_html('pl_PL'), 'notice-pl.png'));
+check('ja: a language outside the 24 gets the English notice', static fn (): bool => str_contains(notice_html('ja'), 'notice-en.png'));
+check('notice: one English summary line, opens on the first click', static function (): bool {
+    $out = notice_html('en_US');
+    return str_contains($out, '<details class="durabix-notice"><summary>Your legal guarantee rights</summary>');
 });
-
-// 3 and 4. One English msgid; no hardcoded per-locale source strings.
-check('de_DE: reminder goes through one English msgid, no hardcoded German', static function (): bool {
+check('notice: all 24 official language files ship with the plugin', static function (): bool {
+    foreach (\Durabix\Model\HarmonisedNotice::LANGUAGES as $lang) {
+        if (! is_readable(__DIR__ . '/../' . \Durabix\Model\HarmonisedNotice::imageFile($lang))) {
+            return false;
+        }
+    }
+    return count(\Durabix\Model\HarmonisedNotice::LANGUAGES) === 24;
+});
+check('notice: hidden on a product marked as not a good', static function (): bool {
     reset_state();
-    $GLOBALS['locale'] = 'de_DE';
-    $GLOBALS['options']['durabix_settings'] = ['enabled' => '1', 'statutory_years' => 2];
     $GLOBALS['product'] = new WC_Product();
-    $s   = new GuaranteeService();
-    $out = render(static fn () => $s->{reminder_method($s)}());
-    return str_contains($out, 'You are entitled by law to a legal guarantee of conformity')
-        && ! str_contains($out, 'Gewahrleistung');
+    $GLOBALS['product']->meta['_durabix_exempt_guarantee'] = 'yes';
+    return render(static fn () => (new GuaranteeService())->renderNotice()) === '';
 });
 
-check('source strings: no Polish, German, Spanish or Romanian msgids in the notice model', static function (): bool {
-    $src = (string) file_get_contents(__DIR__ . '/../src/Model/GuaranteeNotice.php');
-    return ! preg_match("/'(pl|de|es|ro)' =>/", $src);
-});
-
-// 12. Art. 22a(3) of Directive 2011/83/EU: general reference to a longer national period.
-check('reminder mentions that national law may provide a longer period', static function (): bool {
+// 4. GARAN label (Article 6(1)(la), Annex II to Regulation (EU) 2025/1960).
+function garan_html(array $meta, string $sku = ''): string
+{
     reset_state();
-    $GLOBALS['options']['durabix_settings'] = ['enabled' => '1', 'statutory_years' => 2];
     $GLOBALS['product'] = new WC_Product();
-    $s   = new GuaranteeService();
-    $out = render(static fn () => $s->{reminder_method($s)}());
-    return str_contains($out, 'National law may provide a longer period');
+    $GLOBALS['product']->meta = $meta;
+    $GLOBALS['product']->sku  = $sku;
+    return render(static fn () => (new GuaranteeService())->renderGaranLabel());
+}
+check('GARAN: no label without a producer name', static fn (): bool => garan_html(['_durabix_durability_years' => '5']) === '');
+check('GARAN: no label for 2 years', static fn (): bool => garan_html(['_durabix_durability_years' => '2', '_durabix_durability_producer' => 'Fairline']) === '');
+check('GARAN: years, brand and model replace the placeholders', static function (): bool {
+    $out = garan_html(['_durabix_durability_years' => '5', '_durabix_durability_producer' => 'Fairline', '_durabix_model_identifier' => 'FL-6']);
+    return str_contains($out, '>5</tspan>') && str_contains($out, '>Fairline</tspan>') && str_contains($out, '>FL-6</tspan>') && ! str_contains($out, '{{');
+});
+check('GARAN: model falls back to the SKU', static fn (): bool => str_contains(garan_html(['_durabix_durability_years' => '5', '_durabix_durability_producer' => 'Fairline'], 'SKU-9'), '>SKU-9</tspan>'));
+check('GARAN: brand is escaped inside the SVG', static function (): bool {
+    $out = garan_html(['_durabix_durability_years' => '5', '_durabix_durability_producer' => '<script>x</script>&Co']);
+    return ! str_contains($out, '<script>') && str_contains($out, '&lt;script&gt;');
+});
+check('GARAN: nested display opens the full label and links to Your Europe', static function (): bool {
+    $out = garan_html(['_durabix_durability_years' => '7', '_durabix_durability_producer' => 'Fairline']);
+    return str_starts_with($out, '<details class="durabix-garan"><summary') && str_contains($out, 'commercial-guarantee-durability/index.htm') && substr_count($out, '<svg') === 2;
+});
+check('GARAN: the two SVG templates share no element id', static function (): bool {
+    preg_match_all('/id="([^"]+)"/', (string) file_get_contents(__DIR__ . '/../assets/garan/label.svg'), $a);
+    preg_match_all('/id="([^"]+)"/', (string) file_get_contents(__DIR__ . '/../assets/garan/nested.svg'), $b);
+    return array_intersect($a[1], $b[1]) === [];
 });
 
 // 5. Green claims: Unicode, diacritics, inflected forms.
@@ -444,15 +488,10 @@ check('settings: a non-array option value does not fatal', static function (): b
     $out = (new SettingsPage())->sanitizeSettings('garbage');
     return ($out['enabled'] ?? null) === '0';
 });
-check('settings: statutory years capped at 10', static function (): bool {
+check('settings: the old reminder text and duration settings are gone', static function (): bool {
     reset_state();
-    return (new SettingsPage())->sanitizeSettings(['statutory_years' => '99'])['statutory_years'] === 10;
-});
-
-// 8. Leftovers from the "harmonised" naming and unused globals.
-check('no "harmonised" method or CSS class on the reminder', static function (): bool {
-    $src = (string) file_get_contents(__DIR__ . '/../src/Service/GuaranteeService.php');
-    return ! method_exists(GuaranteeService::class, 'renderHarmonisedNotice') && ! str_contains($src, 'durabix-harmonised-notice');
+    $out = (new SettingsPage())->sanitizeSettings(['statutory_years' => '5', 'custom_notice' => 'x', 'notice_email' => '1']);
+    return ! isset($out['statutory_years']) && ! isset($out['custom_notice']) && $out['notice_email'] === '1' && $out['notice_checkout'] === '0';
 });
 check('no unused DURABIX_DIR / DURABIX_URL constants', static function (): bool {
     return ! str_contains((string) file_get_contents(__DIR__ . '/../durabix.php'), 'DURABIX_');

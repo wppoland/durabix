@@ -84,12 +84,12 @@ final class ProductMetaBox implements HasHooks
         wp_nonce_field('durabix_save_product_fields', 'durabix_product_nonce');
 
         echo '<div class="options_group durabix-options-group">';
-        echo '<h4 style="padding-left:12px;">' . esc_html__('EU Legal Guarantee & Durability (Article 6(1)(l) and (la) of Directive 2011/83/EU)', 'durabix') . '</h4>';
+        echo '<h4 style="padding-left:12px;">' . esc_html__('EU harmonised notice and GARAN label (Article 6(1)(l) and (la) of Directive 2011/83/EU)', 'durabix') . '</h4>';
 
         woocommerce_wp_checkbox([
             'id' => GuaranteeService::META_EXEMPT_GUARANTEE,
-            'label' => __('Hide guarantee reminder', 'durabix'),
-            'description' => __('Hide the goods legal guarantee reminder on this product, for example a digital download or a service. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show.', 'durabix'),
+            'label' => __('Hide the notice (not a good)', 'durabix'),
+            'description' => __('Hide the harmonised notice for this product, for example a digital download or a service: the notice covers goods. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show.', 'durabix'),
         ]);
 
         woocommerce_wp_text_input([
@@ -104,7 +104,14 @@ final class ProductMetaBox implements HasHooks
         woocommerce_wp_text_input([
             'id' => GuaranteeService::META_DURABILITY_PRODUCER,
             'label' => __('Producer / Brand Name', 'durabix'),
-            'description' => __('Name of the manufacturer offering the commercial durability guarantee.', 'durabix'),
+            'description' => __('Name of the producer offering the commercial guarantee of durability, as printed on the GARAN label. The label shows only when this and the years are filled in.', 'durabix'),
+            'desc_tip' => true,
+        ]);
+
+        woocommerce_wp_text_input([
+            'id' => GuaranteeService::META_MODEL_IDENTIFIER,
+            'label' => __('Model identifier', 'durabix'),
+            'description' => __('Model identifier for which the producer offers the guarantee, as printed on the GARAN label. Empty uses the SKU.', 'durabix'),
             'desc_tip' => true,
         ]);
 
@@ -147,11 +154,13 @@ final class ProductMetaBox implements HasHooks
         $exempt   = isset($_POST[GuaranteeService::META_EXEMPT_GUARANTEE]) ? 'yes' : 'no';
         $years    = isset($_POST[GuaranteeService::META_DURABILITY_YEARS]) ? absint(wp_unslash($_POST[GuaranteeService::META_DURABILITY_YEARS])) : 0;
         $producer = isset($_POST[GuaranteeService::META_DURABILITY_PRODUCER]) ? sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_DURABILITY_PRODUCER])) : '';
+        $model    = isset($_POST[GuaranteeService::META_MODEL_IDENTIFIER]) ? sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_MODEL_IDENTIFIER])) : '';
         $repair   = isset($_POST[GuaranteeService::META_REPAIR_SCORE]) ? self::parseClass(sanitize_text_field(wp_unslash($_POST[GuaranteeService::META_REPAIR_SCORE]))) : '';
 
         $product->update_meta_data(GuaranteeService::META_EXEMPT_GUARANTEE, $exempt);
         $product->update_meta_data(GuaranteeService::META_DURABILITY_YEARS, $years > 2 ? $years : '');
         $product->update_meta_data(GuaranteeService::META_DURABILITY_PRODUCER, $producer);
+        $product->update_meta_data(GuaranteeService::META_MODEL_IDENTIFIER, $model);
         $product->update_meta_data(GuaranteeService::META_REPAIR_SCORE, $repair);
         $product->save_meta_data();
     }

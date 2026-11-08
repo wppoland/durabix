@@ -1,30 +1,35 @@
 === Durabix - EU Legal Guarantee Notice for WooCommerce ===
 Contributors: motylanogha
-Tags: woocommerce, guarantee, legal guarantee, repairability, green claims
+Tags: woocommerce, legal guarantee, garan label, harmonised notice, green claims
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.1.2
+Stable tag: 1.2.0
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
-Legal guarantee reminder, durability guarantee note, repairability class badge and a green claims phrase check for WooCommerce product pages.
+The EU harmonised legal guarantee notice and the GARAN label in the official design, plus a repairability class badge and a green claims phrase check.
 
 == Description ==
 
-Directive (EU) 2024/825 (Empowering Consumers for the Green Transition) amends Directive 2011/83/EU. Before a distance contract, the trader must remind the consumer of the legal guarantee of conformity, including its minimum duration of two years (Article 6(1)(l)), and, where the producer offers a commercial guarantee of durability at no additional cost covering the entire good for more than two years and tells the trader, say that the good benefits from it and for how long (Article 6(1)(la)). Member States apply these rules from 27 September 2026 (Article 4(1) of Directive (EU) 2024/825); in Poland the transposing act (Dz.U. 2026 poz. 1353) applies from 27 September 2027.
+Directive (EU) 2024/825 (Empowering Consumers for the Green Transition) amends Directive 2011/83/EU. Before a distance contract, the trader must remind the consumer of the legal guarantee of conformity "in a prominent manner, using the harmonised notice" (Article 6(1)(l)), and, where the producer offers a commercial guarantee of durability at no additional cost covering the entire good for more than two years and tells the trader, say so "using the harmonised label" (Article 6(1)(la)). Article 22a requires both, and Commission Implementing Regulation (EU) 2025/1960 fixes their design: the notice in Annex I, the GARAN label in Annex II, both applicable from 27 September 2026 (Article 3). Member States apply these rules from 27 September 2026 (Article 4(1) of Directive (EU) 2024/825); in Poland the transposing act (Dz.U. 2026 poz. 1353) applies from 27 September 2027.
 
 Directive (EU) 2024/825 also adds to Annex I of Directive 2005/29/EC a ban on generic environmental claims the trader cannot back with recognised excellent environmental performance (point 4a; recital 9 gives "eco-friendly", "green" and "biodegradable" as examples) and on claims that a product has a neutral, reduced or positive greenhouse gas impact based on offsetting (point 4c).
 
 Durabix adds the following to WooCommerce:
 
-* **Legal guarantee reminder**: Shows a text reminder of the legal guarantee of conformity (at least two years, longer where national law provides) on product pages. It is plain text, not the harmonised notice (see the FAQ).
-* **Durability guarantee note**: Shows a text note when you enter a producer commercial durability guarantee longer than two years. It is plain text, not the harmonised label (see the FAQ).
+* **Harmonised notice**: The Commission's official colour notice on the legal guarantee of conformity, in the site language (all 24 official EU languages ship with the plugin, English for any other language). A short "Your legal guarantee rights" line opens the full, unedited notice on the first click, as in the Commission's online examples, with a link to the same Your Europe page the QR code leads to.
+* **Notice at checkout and in the confirmation email**: The same line above the place order button on the classic and the block checkout, and the notice in the processing and on-hold order emails to the customer. Each can be switched off.
+* **GARAN label**: When you enter a producer guarantee of durability over two years and the producer's name on a product, the product page shows the nested GARAN label, which opens the full label with the years, the brand and the model identifier (or the SKU) filled in. Only those three fields are editable under Annex II; the rest is the Commission's file. The label is set in Inter, which ships with the plugin.
 * **Repairability class**: Shows the repairability class (A to E) you enter for a smartphone or slate tablet as a colour-coded badge (see the FAQ).
-* **Green claims check**: Scans product titles, descriptions, short descriptions, attribute values and the descriptions of up to 100 variations in the admin and flags phrases such as "climate neutral" or "eco-friendly" (English, Polish, German, Spanish) for you to review. It works in the product editor whether or not the reminder is shown.
-* **Flexible Display Options**: Position notices under the single product summary (near the price and add-to-cart button) or inside a dedicated "Guarantee & Durability" product tab.
-* **Per-product hide switch**: A checkbox on each product hides the goods reminder, for example on a digital download or a service. It is not set automatically. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show.
-* **No external calls**: Durabix stores nothing outside your site, makes no external requests and does not touch orders, cart or checkout, so it runs alongside HPOS and the Cart and Checkout Blocks.
+* **Green claims check**: Scans product titles, descriptions, short descriptions, attribute values and the descriptions of up to 100 variations in the admin and flags phrases such as "climate neutral" or "eco-friendly" (English, Polish, German, Spanish) for you to review. It works in the product editor whether or not the notice is shown.
+* **Display options**: The notice and label sit under the product summary (near the price and add-to-cart button) or in a "Guarantee & Durability" product tab.
+* **Per-product hide switch**: A checkbox on each product hides the notice, for example on a digital download or a service, since the notice covers goods. It is not set automatically. Article 6(1)(lb) of Directive 2011/83/EU requires a separate reminder for digital content and digital services, which Durabix does not show. Checkout and the email show the notice when at least one item is a good.
+* **No external calls**: The notice images, the label and the font load from your own site. Durabix sends nothing to other services; the Your Europe links are plain links. It declares compatibility with HPOS and the Cart and Checkout Blocks.
+
+What Durabix does not do: it does not show the GARAN label at checkout or in emails, has no per-variation label fields, and does not check that the producer's guarantee meets Article 17 of Directive (EU) 2019/771. Showing the notice and label does not by itself make a shop compliant.
+
+The notice and label files are © European Union, reused under the Commission's reuse policy (Commission Decision 2011/833/EU, CC BY 4.0) and shown unchanged, as Implementing Regulation (EU) 2025/1960 requires; Durabix only fills in the three editable label fields. Durabix is not affiliated with or endorsed by the European Commission. Inter is licensed under the SIL Open Font License 1.1 (assets/fonts/OFL.txt).
 
 = Documentation and links =
 
@@ -43,8 +48,8 @@ Durabix is fully translatable and ships the `durabix.pot` template. Translations
 
 1. Ensure WooCommerce 8.0 or higher is installed and active.
 2. Install Durabix and activate it.
-3. Open WooCommerce > EU Legal Guarantee to configure notice placement and statutory defaults.
-4. Edit products to add producer durability guarantee years (e.g. 3, 5, 10 years), repairability classes, or review green claims auditor alerts.
+3. Open WooCommerce > EU Legal Guarantee to choose where the notice appears: product page, checkout and order email.
+4. On products with a producer guarantee of durability, enter the years (3 or more), the producer name and the model identifier for the GARAN label. Add a repairability class where it applies and review the green claims check.
 
 == Frequently Asked Questions ==
 
@@ -52,13 +57,16 @@ Durabix is fully translatable and ships the `durabix.pot` template. Translations
 Member States had to adopt and publish the transposing measures by 27 March 2026 and apply them from 27 September 2026 (Article 4(1)). The rules bind shops through each country's transposing law: in Poland that act (Dz.U. 2026 poz. 1353) applies from 27 September 2027.
 
 = What is the harmonised notice? =
-Article 6(1)(l) of Directive 2011/83/EU (as amended by Directive (EU) 2024/825) requires a reminder of the legal guarantee of conformity, including its minimum duration of two years, "using the harmonised notice referred to in Article 22a". Its design and content are set by Commission Implementing Regulation (EU) 2025/1960: Article 1 says the notice "shall comply with the design and content set out in Annex I", Annex I note (1) says "None of the elements of the harmonised notice can be edited", and Article 3 says it applies from 27 September 2026. Durabix does not display that notice. Where a country's transposing law applies, the plugin's text reminder alone does not meet Article 6(1)(l); use the official notice from Annex I.
+Article 6(1)(l) of Directive 2011/83/EU (as amended by Directive (EU) 2024/825) requires a reminder of the legal guarantee of conformity, including its minimum duration of two years, "in a prominent manner, using the harmonised notice referred to in Article 22a". Implementing Regulation (EU) 2025/1960 sets its design: Article 1 says it "shall comply with the design and content set out in Annex I", Annex I note (1) says "None of the elements of the harmonised notice can be edited" and note (5) says it is in colour for online contracts. Durabix shows the Commission's colour file for the site language, unchanged.
 
-= What is the harmonised label? =
-Article 6(1)(la) of Directive 2011/83/EU requires the harmonised label of Article 22a where the producer offers a commercial guarantee of durability at no additional cost, covering the entire good and lasting more than two years, and makes that known to the trader. Its design and content are set in Annex II to Implementing Regulation (EU) 2025/1960 (Article 2), applicable from the same date. Durabix shows a text note, not that label.
+= What is the GARAN label? =
+Article 6(1)(la) of Directive 2011/83/EU requires the harmonised label where the producer offers a commercial guarantee of durability at no additional cost, covering the entire good and lasting more than two years, and makes that known to the trader. Annex II to Implementing Regulation (EU) 2025/1960 sets the design and lets only three fields change: the years, the brand or trademark, and the model identifier (note 1). For online sale the label is in colour (note 5) and may use the nested display, which "shall appear in its entirety on the first mouse click, mouse roll-over or tactile screen expansion". Durabix shows the nested label and opens the full one on click.
 
-= Does the reminder fit second-hand goods? =
-Article 10(6) of Directive (EU) 2019/771 lets Member States allow a shorter period for second-hand goods, of not less than one year, when the seller and consumer agree to it. The reminder setting starts at two years, so for such products hide the reminder on the product or write your own text in Custom Notice Override.
+= Which language does the notice use? =
+The site language, through the WordPress locale. A language outside the 24 official EU languages gets the English notice. The checkout line and email text come from the translation files.
+
+= Does the notice fit second-hand goods? =
+Yes. The notice itself says that for second-hand goods a shorter period may apply, but not less than one year (Article 10(6) of Directive (EU) 2019/771 lets Member States allow that when seller and consumer agree).
 
 = Does Durabix protect against greenwashing penalties? =
 No. The green claims check matches product text against a short list of phrases linked to points 4a and 4c of Annex I to Directive 2005/29/EC (as amended by Directive (EU) 2024/825) and lists them in the product editor for review. A match is not a finding of a breach: point 4c bans climate claims only when based on offsetting, and recital 9 of Directive (EU) 2024/825 says a claim whose specification is provided in clear and prominent terms on the same medium, such as the online selling interface, is not a generic environmental claim. No match does not mean the page is compliant either, because only the listed phrases are checked.
@@ -68,12 +76,20 @@ The repairability class from the energy label of a smartphone or slate tablet. C
 
 == Screenshots ==
 
-1. Product page on Twenty Twenty-Five: the legal guarantee reminder, the durability guarantee note and the repairability badge under the price.
-2. Product editor: hide switch for the reminder, commercial durability years, producer name and repairability field.
+1. Product page on Twenty Twenty-Five: the "Your legal guarantee rights" line, the nested GARAN label and the repairability badge under the price.
+2. Product editor: hide switch for products that are not goods, producer guarantee years, producer name, model identifier and repairability class.
 3. Green claims phrase check in the product editor, listing two phrases to review with the Annex I point each relates to.
-4. Settings page under WooCommerce > EU Legal Guarantee.
+4. Settings page under WooCommerce > EU Legal Guarantee: product page placement, checkout and order email.
+5. The full harmonised notice, opened from the product page.
+6. The full GARAN label with the years, brand and model identifier filled in.
+7. The notice line above the place order button on the block checkout.
 
 == Changelog ==
+
+= 1.2.0 =
+* Added: the harmonised notice on the legal guarantee of conformity in the official design of Implementing Regulation (EU) 2025/1960, Annex I, in all 24 official EU languages, on the product page, at checkout (classic and block) and in the processing and on-hold order emails. Article 6(1)(l) of Directive 2011/83/EU requires it from 27 September 2026.
+* Added: the GARAN label (Annex II) with the nested display, filled with the years, the producer and a new model identifier field (the SKU when empty).
+* Removed: the plain text reminder, the durability note, and the duration and custom text settings. They do not meet Article 6(1)(l) and (la), which require the notice and the label.
 
 = 1.1.2 =
 * Changed: renamed from Garantio to Durabix at the request of the WordPress.org plugin review (the old name is used by warranty services). The text domain, main file and settings prefix are now durabix; nothing else changed.
