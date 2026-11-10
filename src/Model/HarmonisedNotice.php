@@ -21,6 +21,8 @@ final class HarmonisedNotice
     public static function language(string $locale): string
     {
         $language = strtolower(substr($locale, 0, 2));
+        // Catalan, Basque and Galician shops sell in Spain: the Spanish notice, not the English one.
+        $language = in_array($language, ['ca', 'eu', 'gl'], true) ? 'es' : $language;
 
         return in_array($language, self::LANGUAGES, true) ? $language : 'en';
     }

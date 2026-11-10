@@ -60,6 +60,35 @@ function plugins_url(string $path, string $file): string
 {
     return 'https://shop.test/wp-content/plugins/durabix/' . $path;
 }
+function apply_filters(string $tag, $value, ...$args)
+{
+    return isset($GLOBALS['filters'][$tag]) ? ($GLOBALS['filters'][$tag])($value, ...$args) : $value;
+}
+
+function do_action(string $tag, ...$args): void
+{
+    $GLOBALS['did'][$tag][] = $args;
+}
+
+function sanitize_textarea_field(string $text): string
+{
+    return trim(strip_tags($text));
+}
+
+function wp_enqueue_style(...$args): void
+{
+}
+
+function add_shortcode(string $tag, $callback): void
+{
+    $GLOBALS['shortcodes'][$tag] = $callback;
+}
+
+function is_admin(): bool
+{
+    return false;
+}
+
 function determine_locale(): string
 {
     return $GLOBALS['locale'];
@@ -281,6 +310,8 @@ function reset_state(): void
     $GLOBALS['fields']   = [];
     $GLOBALS['products'] = [];
     $GLOBALS['product']  = null;
+    $GLOBALS['filters']  = [];
+    $GLOBALS['did']      = [];
     $_POST               = [];
 }
 
@@ -301,6 +332,42 @@ check('ja: a language outside the 24 gets the English notice', static fn (): boo
 check('notice: one English summary line, opens on the first click', static function (): bool {
     $out = notice_html('en_US');
     return str_contains($out, '<details class="durabix-notice"><summary>Your legal guarantee rights</summary>');
+});
+check('ca_ES, eu, gl_ES: the Spanish notice, not the English one', static function (): bool {
+    return str_contains(notice_html('ca'), 'notice-es.png') && str_contains(notice_html('eu'), 'notice-es.png') && str_contains(notice_html('gl_ES'), 'notice-es.png');
+});
+check('national note: shown under the notice, escaped', static function (): bool {
+    reset_state();
+    $GLOBALS['options'][GuaranteeService::OPTION] = ['national_note' => 'In Spain the legal guarantee lasts 3 years <b>'];
+    $GLOBALS['product'] = new WC_Product();
+    $out = render(static fn () => (new GuaranteeService())->renderNotice());
+    return str_contains($out, 'class="durabix-notice__national">In Spain the legal guarantee lasts 3 years &lt;b&gt;</p>');
+});
+check('national note: empty by default, nothing printed', static fn (): bool => ! str_contains(notice_html('en_US'), 'durabix-notice__national'));
+check('durabix_show_notice: a B2B shop can hide the product page notice', static function (): bool {
+    reset_state();
+    $GLOBALS['product'] = new WC_Product();
+    $GLOBALS['filters']['durabix_show_notice'] = static fn (bool $show, string $context): bool => $context !== 'product';
+    return render(static fn () => (new GuaranteeService())->renderNotice()) === '';
+});
+check('footer: off by default, on when enabled, shortcode registered', static function (): bool {
+    reset_state();
+    (new GuaranteeService())->registerHooks();
+    $offByDefault = ! in_array('wp_footer', $GLOBALS['actions'], true);
+    $shortcode    = isset($GLOBALS['shortcodes']['durabix_notice']);
+    reset_state();
+    $GLOBALS['options'][GuaranteeService::OPTION] = ['notice_footer' => '1'];
+    $GLOBALS['actions'] = [];
+    (new GuaranteeService())->registerHooks();
+    $onWhenEnabled = in_array('wp_footer', $GLOBALS['actions'], true);
+    $footer = render(static fn () => (new GuaranteeService())->renderFooterNotice());
+    return $offByDefault && $onWhenEnabled && $shortcode && str_contains($footer, 'class="durabix-footer-notice"><details class="durabix-notice">');
+});
+check('settings: footer switch and national note are saved and registered for translation', static function (): bool {
+    reset_state();
+    $out = (new SettingsPage())->sanitizeSettings(['notice_footer' => '1', 'national_note' => "  Three years in Spain.  "]);
+    return $out['notice_footer'] === '1' && $out['national_note'] === 'Three years in Spain.'
+        && ($GLOBALS['did']['wpml_register_single_string'][0] ?? []) === ['durabix', 'national_note', 'Three years in Spain.'];
 });
 check('notice: all 24 official language files ship with the plugin', static function (): bool {
     foreach (\Durabix\Model\HarmonisedNotice::LANGUAGES as $lang) {

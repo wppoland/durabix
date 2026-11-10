@@ -55,6 +55,8 @@ final class GuaranteeService implements HasHooks
             'notice_position' => 'single_summary',
             'notice_checkout' => '1',
             'notice_email'    => '1',
+            'notice_footer'   => '0',
+            'national_note'   => '',
         ];
     }
 
@@ -82,6 +84,11 @@ final class GuaranteeService implements HasHooks
         }
 
         add_action('wp_enqueue_scripts', [$this, 'enqueueStyles']);
+        add_shortcode('durabix_notice', [$this, 'renderShortcode']);
+
+        if (! empty($this->settings['notice_footer'])) {
+            add_action('wp_footer', [$this, 'renderFooterNotice']);
+        }
 
         if ((string) ($this->settings['notice_position'] ?? 'single_summary') === 'single_summary') {
             add_action('woocommerce_single_product_summary', [$this, 'renderNotice'], 25);
@@ -104,7 +111,7 @@ final class GuaranteeService implements HasHooks
 
     public function enqueueStyles(): void
     {
-        if (! (is_product() || is_checkout())) {
+        if (! (is_product() || is_checkout() || ! empty($this->settings['notice_footer']))) {
             return;
         }
 
@@ -117,7 +124,7 @@ final class GuaranteeService implements HasHooks
     public function renderNotice(): void
     {
         global $product;
-        if (! $product instanceof \WC_Product || ! self::showsNotice($product)) {
+        if (! $product instanceof \WC_Product || ! self::showsNotice($product) || ! self::shownIn('product')) {
             return;
         }
 
@@ -129,7 +136,7 @@ final class GuaranteeService implements HasHooks
      */
     public function renderCheckoutNotice(): void
     {
-        if ($this->cartHasGoods()) {
+        if ($this->cartHasGoods() && self::shownIn('checkout')) {
             echo $this->noticeHtml(); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in noticeHtml().
         }
     }
@@ -139,7 +146,7 @@ final class GuaranteeService implements HasHooks
      */
     public function prependCheckoutNotice(string $content): string
     {
-        return $this->cartHasGoods() ? $this->noticeHtml() . $content : $content;
+        return $this->cartHasGoods() && self::shownIn('checkout') ? $this->noticeHtml() . $content : $content;
     }
 
     /**
@@ -165,6 +172,7 @@ final class GuaranteeService implements HasHooks
             }
         }
         $labels = self::orderGaranLabels($order);
+        $hasGoods = $hasGoods && self::shownIn('email', $order);
         if (! $hasGoods && $labels === []) {
             return;
         }
@@ -174,6 +182,9 @@ final class GuaranteeService implements HasHooks
         if ($plainText) {
             if ($hasGoods) {
                 echo "\n" . esc_html__('Your legal guarantee rights', 'durabix') . ': ' . esc_url_raw(HarmonisedNotice::infoUrl($language)) . "\n";
+                if ($this->nationalNote() !== '') {
+                    echo esc_html($this->nationalNote()) . "\n";
+                }
             }
             foreach ($labels as $label) {
                 echo "\n" . esc_html(self::garanLine($label)) . "\n";
@@ -190,6 +201,9 @@ final class GuaranteeService implements HasHooks
                 esc_url(HarmonisedNotice::infoUrl($language)),
                 esc_html__('More about your legal guarantee rights on Your Europe', 'durabix')
             );
+            if ($this->nationalNote() !== '') {
+                echo '<p style="margin:0 0 24px;">' . esc_html($this->nationalNote()) . '</p>';
+            }
         }
         foreach ($labels as $label) {
             echo '<p style="margin:0 0 12px;">' . esc_html(self::garanLine($label)) . '</p>';
@@ -376,15 +390,65 @@ final class GuaranteeService implements HasHooks
     {
         $language = HarmonisedNotice::language(determine_locale());
         $image    = plugins_url(HarmonisedNotice::imageFile($language), \Durabix\PLUGIN_FILE);
+        $note     = $this->nationalNote();
 
         return sprintf(
-            '<details class="durabix-notice"><summary>%1$s</summary><div class="durabix-notice__body"><a href="%2$s" target="_blank" rel="noopener"><img src="%2$s" width="1654" height="2339" loading="lazy" alt="%3$s" /></a><p><a href="%4$s" target="_blank" rel="noopener">%5$s</a></p></div></details>',
+            '<details class="durabix-notice"><summary>%1$s</summary><div class="durabix-notice__body"><a href="%2$s" target="_blank" rel="noopener"><img src="%2$s" width="1654" height="2339" loading="lazy" alt="%3$s" /></a><p><a href="%4$s" target="_blank" rel="noopener">%5$s</a></p>%6$s</div></details>',
             esc_html__('Your legal guarantee rights', 'durabix'),
             esc_url($image),
             esc_attr__('EU harmonised notice on the legal guarantee of conformity', 'durabix'),
             esc_url(HarmonisedNotice::infoUrl($language)),
-            esc_html__('More about your legal guarantee rights on Your Europe', 'durabix')
+            esc_html__('More about your legal guarantee rights on Your Europe', 'durabix'),
+            $note === '' ? '' : '<p class="durabix-notice__national">' . esc_html($note) . '</p>'
         );
+    }
+
+    /**
+     * [durabix_notice]: the notice anywhere the shop puts it, for example its terms or a footer widget.
+     */
+    public function renderShortcode(): string
+    {
+        if (! self::shownIn('shortcode')) {
+            return '';
+        }
+
+        wp_enqueue_style('durabix', plugins_url('assets/css/durabix.css', \Durabix\PLUGIN_FILE), [], \Durabix\VERSION);
+
+        return $this->noticeHtml();
+    }
+
+    /**
+     * A shop-wide reminder at the foot of every page, outside the product pages.
+     */
+    public function renderFooterNotice(): void
+    {
+        if (is_admin() || ! self::shownIn('footer')) {
+            return;
+        }
+
+        echo '<div class="durabix-footer-notice">' . $this->noticeHtml() . '</div>'; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in noticeHtml().
+    }
+
+    /**
+     * The merchant's own note beside the notice, e.g. a longer national guarantee period the uneditable
+     * EU notice cannot state. Plain text; translatable through WPML and Polylang string translation.
+     */
+    private function nationalNote(): string
+    {
+        $note = trim((string) ($this->settings['national_note'] ?? ''));
+
+        return (string) apply_filters('wpml_translate_single_string', $note, 'durabix', 'national_note');
+    }
+
+    /**
+     * The notice is owed to consumers; WordPress cannot tell a consumer from a trade customer, so a B2B shop
+     * answers here. $context: product, checkout, email, footer or shortcode.
+     *
+     * @param mixed $object The product page's product, or the order for the email.
+     */
+    private static function shownIn(string $context, $object = null): bool
+    {
+        return (bool) apply_filters('durabix_show_notice', true, $context, $object);
     }
 
     private function cartHasGoods(): bool
