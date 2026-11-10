@@ -22,6 +22,7 @@ final class SettingsPage implements HasHooks
         add_action('admin_init', [$this, 'registerSettings']);
         // options.php checks manage_options unless the group says otherwise; the menu allows shop managers.
         add_filter('option_page_capability_' . self::PAGE_SLUG, static fn (): string => 'manage_woocommerce');
+        add_action('admin_notices', [$this, 'renderOffNotice']);
     }
 
     public function registerMenu(): void
@@ -58,6 +59,10 @@ final class SettingsPage implements HasHooks
         $sanitized['notice_position'] = ($input['notice_position'] ?? '') === 'tab' ? 'tab' : 'single_summary';
         $sanitized['notice_checkout'] = ! empty($input['notice_checkout']) ? '1' : '0';
         $sanitized['notice_email'] = ! empty($input['notice_email']) ? '1' : '0';
+        $sanitized['notice_footer'] = ! empty($input['notice_footer']) ? '1' : '0';
+        $sanitized['national_note'] = sanitize_textarea_field(wp_unslash((string) ($input['national_note'] ?? '')));
+        // WPML and Polylang list the note for translation once it is registered.
+        do_action('wpml_register_single_string', 'durabix', 'national_note', $sanitized['national_note']);
 
         return $sanitized;
     }
@@ -119,12 +124,52 @@ final class SettingsPage implements HasHooks
                             </label>
                         </td>
                     </tr>
+                    <tr>
+                        <th scope="row"><?php echo esc_html__('Every page', 'durabix'); ?></th>
+                        <td>
+                            <label>
+                                <input type="checkbox" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[notice_footer]" value="1" <?php checked(! empty($settings['notice_footer'])); ?> />
+                                <?php echo esc_html__('Show the notice at the foot of every page of the site, as a general reminder', 'durabix'); ?>
+                            </label>
+                            <p class="description">
+                                <?php
+                                /* translators: %s: the shortcode */
+                                printf(esc_html__('To place it yourself, for example on your terms page, use the %s shortcode.', 'durabix'), '<code>[durabix_notice]</code>');
+                                ?>
+                            </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <th scope="row"><label for="durabix-national-note"><?php echo esc_html__('National note', 'durabix'); ?></label></th>
+                        <td>
+                            <textarea id="durabix-national-note" class="large-text" rows="3" name="<?php echo esc_attr(GuaranteeService::OPTION); ?>[national_note]"><?php echo esc_textarea((string) ($settings['national_note'] ?? '')); ?></textarea>
+                            <p class="description"><?php echo esc_html__('Optional plain text shown under the notice and in the order email. The EU notice cannot be edited and states the two-year EU minimum; if your country gives consumers a longer legal guarantee, say so here in your own words. Durabix does not fill this in for you.', 'durabix'); ?></p>
+                        </td>
+                    </tr>
                 </table>
                 <?php submit_button(); ?>
             </form>
             <?php $this->renderCompanionCard(); ?>
         </div>
         <?php
+    }
+
+    /**
+     * Turning Durabix off removes the notice from every placement; say so on the plugin's screens.
+     */
+    public function renderOffNotice(): void
+    {
+        $screen = function_exists('get_current_screen') ? get_current_screen() : null;
+        if (! $screen || ! in_array($screen->id, ['plugins', 'woocommerce_page_' . self::PAGE_SLUG], true) || ! current_user_can('manage_woocommerce') || ! empty(GuaranteeService::settings()['enabled'])) {
+            return;
+        }
+
+        printf(
+            '<div class="notice notice-warning"><p>%s <a href="%s">%s</a></p></div>',
+            esc_html__('Durabix is switched off, so the legal guarantee notice is shown nowhere: not on product pages, at checkout or in order emails.', 'durabix'),
+            esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG)),
+            esc_html__('Settings', 'durabix')
+        );
     }
 
     /**
