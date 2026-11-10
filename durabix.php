@@ -3,7 +3,7 @@
  * Plugin Name:       Durabix - EU Legal Guarantee Notice for WooCommerce
  * Plugin URI:        https://plogins.com/durabix/
  * Description:       The EU harmonised legal guarantee notice and the GARAN label in the official design, plus a repairability class badge and a green claims phrase check for WooCommerce.
- * Version:           1.3.1
+ * Version:           1.4.0
  * Requires at least: 6.5
  * Requires PHP:      8.1
  * Requires Plugins:  woocommerce
@@ -25,7 +25,7 @@ namespace Durabix;
 
 defined('ABSPATH') || exit;
 
-const VERSION     = '1.3.1';
+const VERSION     = '1.4.0';
 const PLUGIN_FILE = __FILE__;
 
 require_once __DIR__ . '/autoload.php';
