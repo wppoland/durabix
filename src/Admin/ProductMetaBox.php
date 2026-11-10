@@ -15,6 +15,12 @@ defined('ABSPATH') || exit;
  */
 final class ProductMetaBox implements HasHooks
 {
+    private const VARIATION_META = [
+        'years'    => GuaranteeService::META_DURABILITY_YEARS,
+        'producer' => GuaranteeService::META_DURABILITY_PRODUCER,
+        'model'    => GuaranteeService::META_MODEL_IDENTIFIER,
+    ];
+
     private GreenClaimsAuditor $auditor;
 
     public function __construct()
@@ -26,6 +32,8 @@ final class ProductMetaBox implements HasHooks
     {
         add_action('woocommerce_product_options_general_product_data', [$this, 'renderProductFields']);
         add_action('woocommerce_process_product_meta', [$this, 'saveProductFields']);
+        add_action('woocommerce_product_after_variable_attributes', [$this, 'renderVariationFields'], 10, 3);
+        add_action('woocommerce_save_product_variation', [$this, 'saveVariationFields'], 10, 2);
         add_action('add_meta_boxes', [$this, 'registerGreenClaimsBox']);
     }
 
@@ -133,6 +141,62 @@ final class ProductMetaBox implements HasHooks
         ]);
 
         echo '</div>';
+    }
+
+    /**
+     * The GARAN fields of one variation. Empty takes the parent product's value.
+     *
+     * @param int      $loop
+     * @param mixed    $variationData
+     * @param \WP_Post $variation
+     */
+    public function renderVariationFields($loop, $variationData, $variation): void
+    {
+        $product = wc_get_product($variation->ID);
+        if (! $product instanceof \WC_Product) {
+            return;
+        }
+
+        $loop  = (int) $loop;
+        $max   = ['maxlength' => (string) \Durabix\Model\GaranLabel::MAX_CHARS];
+        $field = static function (string $key, string $label, string $type, array $attrs) use ($product, $loop): void {
+            woocommerce_wp_text_input([
+                'id'                => "durabix_var_{$key}_{$loop}",
+                'name'              => "durabix_var[{$loop}][{$key}]",
+                'label'             => $label,
+                'value'             => (string) $product->get_meta(self::VARIATION_META[$key], true),
+                'placeholder'       => __('Same as the parent product', 'durabix'),
+                'type'              => $type,
+                'custom_attributes' => $attrs,
+                'wrapper_class'     => 'form-row form-row-full',
+            ]);
+        };
+
+        echo '<div class="durabix-variation-garan"><p><strong>' . esc_html__('GARAN label of this variation', 'durabix') . '</strong></p>';
+        $field('years', __('Commercial Durability (Years)', 'durabix'), 'number', ['min' => '3', 'step' => '1']);
+        $field('producer', __('Producer / Brand Name', 'durabix'), 'text', $max);
+        $field('model', __('Model identifier', 'durabix'), 'text', $max);
+        echo '</div>';
+    }
+
+    /**
+     * WooCommerce checks the save-variations nonce before this runs.
+     */
+    public function saveVariationFields(int $variationId, int $loop): void
+    {
+        // phpcs:ignore WordPress.Security.NonceVerification.Missing, WordPress.Security.ValidatedSanitizedInput.InputNotSanitized -- WooCommerce verified the save-variations nonce; each field is sanitized below.
+        $raw = isset($_POST['durabix_var'][$loop]) && is_array($_POST['durabix_var'][$loop]) ? wp_unslash($_POST['durabix_var'][$loop]) : null;
+        $variation = wc_get_product($variationId);
+        if ($raw === null || ! $variation instanceof \WC_Product_Variation || ! current_user_can('edit_post', $variation->get_parent_id())) {
+            return;
+        }
+
+        $years = absint($raw['years'] ?? 0);
+        $variation->update_meta_data(self::VARIATION_META['years'], $years > 2 ? $years : '');
+        foreach (['producer', 'model'] as $key) {
+            $variation->update_meta_data(self::VARIATION_META[$key], mb_substr(sanitize_text_field((string) ($raw[$key] ?? '')), 0, \Durabix\Model\GaranLabel::MAX_CHARS));
+        }
+        $variation->save_meta_data();
     }
 
     public function saveProductFields(int $productId): void

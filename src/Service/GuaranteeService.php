@@ -98,6 +98,8 @@ final class GuaranteeService implements HasHooks
             add_filter('woocommerce_product_tabs', [$this, 'registerGuaranteeTab']);
         }
 
+        add_filter('woocommerce_available_variation', [$this, 'variationGaran'], 10, 3);
+
         if (! empty($this->settings['notice_checkout'])) {
             add_action('woocommerce_review_order_before_submit', [$this, 'renderCheckoutNotice']);
             add_filter('render_block_woocommerce/checkout-actions-block', [$this, 'prependCheckoutNotice']);
@@ -258,7 +260,7 @@ final class GuaranteeService implements HasHooks
             $product = $item instanceof \WC_Order_Item_Product ? $item->get_product() : null;
             $label   = $product instanceof \WC_Product ? self::garan($product) : null;
             if ($label !== null) {
-                $labels[md5($label['years'] . '|' . $label['brand'] . '|' . $label['model'])] = $label;
+                $labels[self::garanKey($label)] = $label;
             }
         }
 
@@ -275,28 +277,31 @@ final class GuaranteeService implements HasHooks
     }
 
     /**
-     * The fields the GARAN label shows, or null when it does not apply. Meta sits on the parent of a variation.
+     * The fields the GARAN label shows, or null when it does not apply. A variation's own
+     * duration, brand or model wins; each one it leaves empty comes from the parent product.
      *
      * @return array{years: int, brand: string, model: string}|null
      */
     private static function garan(\WC_Product $product): ?array
     {
         $parent = $product->get_parent_id() > 0 ? wc_get_product($product->get_parent_id()) : null;
-        $source = $parent instanceof \WC_Product ? $parent : $product;
+        $own    = static fn (string $key): string => trim((string) $product->get_meta($key, true));
+        $field  = static fn (string $key): string => $own($key) !== '' || ! $parent instanceof \WC_Product ? $own($key) : trim((string) $parent->get_meta($key, true));
 
-        $years = self::durabilityYears($source);
-        $brand = trim((string) $source->get_meta(self::META_DURABILITY_PRODUCER, true));
-        if ($years === 0 || $brand === '') {
+        $years = (int) $field(self::META_DURABILITY_YEARS);
+        $brand = $field(self::META_DURABILITY_PRODUCER);
+        if ($years <= 2 || $brand === '') {
             return null;
         }
 
-        $model = trim((string) $source->get_meta(self::META_MODEL_IDENTIFIER, true));
+        $model = $field(self::META_MODEL_IDENTIFIER);
 
         return ['years' => $years, 'brand' => $brand, 'model' => $model !== '' ? $model : (string) $product->get_sku()];
     }
 
     /**
      * The GARAN label where the producer offers a durability guarantee over two years (Article 6(1)(la)).
+     * On a variable product it sits in a slot the variation script refills when the shopper picks one.
      */
     public function renderGaranLabel(): void
     {
@@ -306,23 +311,106 @@ final class GuaranteeService implements HasHooks
         }
 
         $label = self::garan($product);
-        if ($label === null) {
+        $html  = $label === null ? '' : self::garanHtml($label);
+
+        if ($product->is_type('variable')) {
+            // Each distinct variation label once, as a template: the full label is ~300 KB of SVG.
+            $templates = [];
+            foreach ($product->get_children() as $childId) {
+                $child = wc_get_product($childId);
+                $own   = $child instanceof \WC_Product && self::hasOwnGaran($child) ? self::garan($child) : null;
+                if ($own !== null && $own !== $label) {
+                    $templates[self::garanKey($own)] = '<template data-durabix-garan="' . esc_attr(self::garanKey($own)) . '">' . self::garanHtml($own) . '</template>';
+                }
+            }
+            echo '<div class="durabix-garan-slot">' . $html . '</div>' . implode('', $templates); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in garanHtml().
+            // Own handle: a block theme renders this before WooCommerce's variation script is registered, or after it printed.
+            wp_register_script('durabix-variation', false, ['jquery'], \Durabix\VERSION, true);
+            wp_add_inline_script('durabix-variation', self::VARIATION_SCRIPT);
+            wp_enqueue_script('durabix-variation');
+
             return;
         }
+
+        echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in garanHtml().
+    }
+
+    /**
+     * Variation data: the key of the variation's label template, '' for no label, only when it differs from the parent's.
+     *
+     * @param array<string, mixed> $data
+     * @param mixed                $parent
+     * @param mixed                $variation
+     * @return array<string, mixed>
+     */
+    public function variationGaran(array $data, $parent, $variation): array
+    {
+        if (! $variation instanceof \WC_Product || ! $parent instanceof \WC_Product || ! self::hasOwnGaran($variation)) {
+            return $data;
+        }
+
+        $label = self::garan($variation);
+        if ($label !== self::garan($parent)) {
+            $data['durabix_garan'] = $label === null ? '' : self::garanKey($label);
+        }
+
+        return $data;
+    }
+
+    /**
+     * Only variations with a GARAN field of their own swap the label; one that differs from
+     * the parent by its SKU alone keeps the parent's label on the product page, as before 1.4.0.
+     */
+    private static function hasOwnGaran(\WC_Product $variation): bool
+    {
+        foreach ([self::META_DURABILITY_YEARS, self::META_DURABILITY_PRODUCER, self::META_MODEL_IDENTIFIER] as $key) {
+            if (trim((string) $variation->get_meta($key, true)) !== '') {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
+    /**
+     * @param array{years: int, brand: string, model: string} $label
+     */
+    private static function garanKey(array $label): string
+    {
+        return md5($label['years'] . '|' . $label['brand'] . '|' . $label['model']);
+    }
+
+    /** Swaps the slot on variation pick; WooCommerce 11.1+ may replace the form, so it listens on the document. */
+    private const VARIATION_SCRIPT = <<<'JS'
+jQuery(function ($) {
+    var slot = $('.durabix-garan-slot').first(), base = slot.html();
+    $(document).on('found_variation', '.variations_form', function (e, v) {
+        var key = v && v.durabix_garan, tpl = key ? document.querySelector('template[data-durabix-garan="' + key + '"]') : null;
+        slot.html(typeof key !== 'string' ? base : (tpl ? tpl.innerHTML : ''));
+    }).on('reset_data', '.variations_form', function () {
+        slot.html(base);
+    });
+});
+JS;
+
+    /**
+     * @param array{years: int, brand: string, model: string} $label
+     */
+    private static function garanHtml(array $label): string
+    {
         ['years' => $years, 'brand' => $producer, 'model' => $model] = $label;
-        $dir   = dirname(\Durabix\PLUGIN_FILE);
+        $dir = dirname(\Durabix\PLUGIN_FILE);
 
         /* translators: %d: duration in years of the producer's commercial guarantee of durability */
         $summary = sprintf(__('GARAN label: %d-year producer guarantee of durability. Show the full label.', 'durabix'), $years);
 
-        echo '<details class="durabix-garan"><summary aria-label="' . esc_attr($summary) . '">';
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG shipped with the plugin; GaranLabel escapes the duration.
-        echo GaranLabel::nested($dir, $years);
-        echo '</summary><div class="durabix-garan__full">';
-        // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- static SVG shipped with the plugin; GaranLabel escapes duration, brand and model.
-        echo GaranLabel::full($dir, $years, $producer, $model);
-        echo '<p><a href="' . esc_url(GaranLabel::INFO_URL) . '" target="_blank" rel="noopener">' . esc_html__('About the producer guarantee of durability on Your Europe', 'durabix') . '</a></p>';
-        echo '</div></details>';
+        // GaranLabel returns static SVG shipped with the plugin and escapes duration, brand and model.
+        return '<details class="durabix-garan"><summary aria-label="' . esc_attr($summary) . '">'
+            . GaranLabel::nested($dir, $years)
+            . '</summary><div class="durabix-garan__full">'
+            . GaranLabel::full($dir, $years, $producer, $model)
+            . '<p><a href="' . esc_url(GaranLabel::INFO_URL) . '" target="_blank" rel="noopener">' . esc_html__('About the producer guarantee of durability on Your Europe', 'durabix') . '</a></p>'
+            . '</div></details>';
     }
 
     /**

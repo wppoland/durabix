@@ -133,6 +133,18 @@ function wp_strip_all_tags(string $text): string
 {
     return strip_tags($text);
 }
+function wp_add_inline_script(string $handle, string $data): bool
+{
+    $GLOBALS['inline'][$handle] = $data;
+    return true;
+}
+function wp_register_script(...$args): bool
+{
+    return true;
+}
+function wp_enqueue_script(...$args): void
+{
+}
 function wc_get_product($id)
 {
     return $GLOBALS['products'][$id] ?? null;
@@ -437,6 +449,48 @@ check('GARAN email: the body names the label and the attachment', static functio
     $email = (object) ['id' => 'customer_processing_order'];
     $out = render(static fn () => (new GuaranteeService())->renderEmailNotice($order, false, true, $email));
     return substr_count($out, 'GARAN label: Fairline FL-6, 5-year') === 1;
+});
+check('GARAN variation: own duration and model, brand from the parent; email gets two labels', static function (): bool {
+    $order = garan_order();
+    $GLOBALS['products'][12]->meta = ['_durabix_durability_years' => '10', '_durabix_model_identifier' => 'FL-9'];
+    $files = (new GuaranteeService())->attachGaranLabels([], 'customer_processing_order', $order, null);
+    $all = implode('', array_map(static fn ($f) => (string) file_get_contents($f), $files));
+    return count($files) === 2 && str_contains($all, '>10</tspan>') && str_contains($all, '>FL-9</tspan>') && substr_count($all, '>Fairline</tspan>') === 2;
+});
+check('GARAN variation: data carries the label only when it differs from the parent', static function (): bool {
+    garan_order();
+    $svc = new GuaranteeService();
+    [$parent, $same, $own] = [$GLOBALS['products'][10], $GLOBALS['products'][11], $GLOBALS['products'][12]];
+    $own->meta = ['_durabix_durability_years' => '10'];
+    $a = $svc->variationGaran([], $parent, $same);
+    $b = $svc->variationGaran([], $parent, $own);
+    return ! isset($a['durabix_garan']) && preg_match('/^[0-9a-f]{32}$/', (string) ($b['durabix_garan'] ?? '')) === 1;
+});
+check('GARAN variation: a variation that differs only by SKU swaps nothing', static function (): bool {
+    garan_order();
+    $GLOBALS['products'][10]->meta['_durabix_model_identifier'] = '';
+    $GLOBALS['products'][11]->sku = 'SKU-11';
+    return ! isset((new GuaranteeService())->variationGaran([], $GLOBALS['products'][10], $GLOBALS['products'][11])['durabix_garan']);
+});
+check('GARAN variation: a label only on a variation, none on the parent', static function (): bool {
+    reset_state();
+    $parent = new WC_Product(20);
+    $v = new WC_Product(21);
+    $v->parent = 20;
+    $v->meta = ['_durabix_durability_years' => '4', '_durabix_durability_producer' => 'Kettle Co'];
+    $parent->type = 'variable';
+    $parent->children = [21];
+    $GLOBALS['product'] = $parent;
+    $data = (new GuaranteeService())->variationGaran([], $parent, $v);
+    $out  = render(static fn () => (new GuaranteeService())->renderGaranLabel());
+    return str_contains($out, '<div class="durabix-garan-slot"></div><template data-durabix-garan="' . $data['durabix_garan'] . '">') && substr_count($out, '>Kettle Co</tspan>') === 1;
+});
+check('GARAN variation: the variable product page renders a slot', static function (): bool {
+    reset_state();
+    $GLOBALS['product'] = new WC_Product(30);
+    $GLOBALS['product']->type = 'variable';
+    return str_starts_with(render(static fn () => (new GuaranteeService())->renderGaranLabel()), '<div class="durabix-garan-slot">')
+        && str_contains($GLOBALS['inline']['durabix-variation'] ?? '', 'found_variation');
 });
 check('GARAN fit: short brand and model get no textLength', static fn (): bool => \Durabix\Model\GaranLabel::fit('Fairline', 'FL-6') === ['', '']);
 check('GARAN fit: long brand and model are squeezed into the row', static function (): bool {
