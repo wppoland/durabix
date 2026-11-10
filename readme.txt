@@ -4,7 +4,7 @@ Tags: woocommerce, legal guarantee, garan label, harmonised notice, green claims
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.3.0
+Stable tag: 1.3.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,9 @@ The repairability class from the energy label of a smartphone or slate tablet. C
 7. The notice line above the place order button on the block checkout.
 
 == Changelog ==
+
+= 1.3.1 =
+* Fixed: the notice at the foot of every page is centred; the button sat at the left edge of a centred box.
 
 = 1.3.0 =
 * Added: the notice at the foot of every page as a general reminder, off by default, and the `[durabix_notice]` shortcode.
