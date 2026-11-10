@@ -116,6 +116,12 @@
 	max-width: 640px;
 	margin: 24px auto;
 	padding: 0 16px;
+	text-align: center;
+}
+
+/* Only the closed button is centred; the opened notice reads left to right. */
+.durabix-footer-notice .durabix-notice > :not(summary) {
+	text-align: start;
 }
 
 .durabix-notice__national {
