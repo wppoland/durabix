@@ -483,14 +483,16 @@ check('GARAN variation: a label only on a variation, none on the parent', static
     $GLOBALS['product'] = $parent;
     $data = (new GuaranteeService())->variationGaran([], $parent, $v);
     $out  = render(static fn () => (new GuaranteeService())->renderGaranLabel());
-    return str_contains($out, '<div class="durabix-garan-slot"></div><template data-durabix-garan="' . $data['durabix_garan'] . '">') && substr_count($out, '>Kettle Co</tspan>') === 1;
+    return str_contains($out, '<div class="durabix-garan-slot"></div><template data-durabix-garan="' . $data['durabix_garan'] . '">') && substr_count($out, '>Kettle Co</tspan>') === 1
+        && str_contains($GLOBALS['inline']['durabix-variation'] ?? '', 'found_variation');
 });
-check('GARAN variation: the variable product page renders a slot', static function (): bool {
+check('GARAN variation: a variable product without variation labels gets no slot and no script', static function (): bool {
     reset_state();
+    $GLOBALS['inline'] = [];
     $GLOBALS['product'] = new WC_Product(30);
     $GLOBALS['product']->type = 'variable';
-    return str_starts_with(render(static fn () => (new GuaranteeService())->renderGaranLabel()), '<div class="durabix-garan-slot">')
-        && str_contains($GLOBALS['inline']['durabix-variation'] ?? '', 'found_variation');
+    return render(static fn () => (new GuaranteeService())->renderGaranLabel()) === ''
+        && ! isset($GLOBALS['inline']['durabix-variation']);
 });
 check('GARAN fit: short brand and model get no textLength', static fn (): bool => \Durabix\Model\GaranLabel::fit('Fairline', 'FL-6') === ['', '']);
 check('GARAN fit: long brand and model are squeezed into the row', static function (): bool {
