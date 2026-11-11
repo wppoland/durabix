@@ -4,7 +4,7 @@ Tags: woocommerce, legal guarantee, garan label, harmonised notice, green claims
 Requires at least: 6.5
 Tested up to: 7.1
 Requires PHP: 8.1
-Stable tag: 1.4.0
+Stable tag: 1.4.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,9 @@ The repairability class from the energy label of a smartphone or slate tablet. C
 7. The notice line above the place order button on the block checkout.
 
 == Changelog ==
+
+= 1.4.1 =
+* Fixed: a variable product whose variations have no GARAN label of their own no longer loads the variation script and an empty label slot; it shows the parent's label like a simple product.
 
 = 1.4.0 =
 * New: a variation can carry its own GARAN label years, brand and model identifier; each field left empty uses the parent product's value.

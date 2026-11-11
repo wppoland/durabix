@@ -323,6 +323,13 @@ final class GuaranteeService implements HasHooks
                     $templates[self::garanKey($own)] = '<template data-durabix-garan="' . esc_attr(self::garanKey($own)) . '">' . self::garanHtml($own) . '</template>';
                 }
             }
+            // No variation with a label of its own: nothing to swap, so no slot and no script.
+            if ($templates === []) {
+                echo $html; // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in garanHtml().
+
+                return;
+            }
+
             echo '<div class="durabix-garan-slot">' . $html . '</div>' . implode('', $templates); // phpcs:ignore WordPress.Security.EscapeOutput.OutputNotEscaped -- built from escaped parts in garanHtml().
             // Own handle: a block theme renders this before WooCommerce's variation script is registered, or after it printed.
             wp_register_script('durabix-variation', false, ['jquery'], \Durabix\VERSION, true);
