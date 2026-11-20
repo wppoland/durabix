@@ -1,5 +1,8 @@
 # Durabix - EU Legal Guarantee Notice for WooCommerce
 
+- **Plugin page:** https://plogins.com/durabix/
+- **Documentation:** https://plogins.com/durabix/docs/
+
 Legal guarantee reminder, commercial durability guarantee note, repairability class badge and a green claims phrase check for WooCommerce product pages.
 
 ## Legal Basis & Directives
