@@ -19,10 +19,22 @@ final class SettingsPage implements HasHooks
     public function registerHooks(): void
     {
         add_action('admin_menu', [$this, 'registerMenu']);
+        add_filter('plugin_action_links_' . plugin_basename(\Durabix\PLUGIN_FILE), [$this, 'actionLinks']);
         add_action('admin_init', [$this, 'registerSettings']);
         // options.php checks manage_options unless the group says otherwise; the menu allows shop managers.
         add_filter('option_page_capability_' . self::PAGE_SLUG, static fn (): string => 'manage_woocommerce');
         add_action('admin_notices', [$this, 'renderOffNotice']);
+    }
+
+    /**
+     * @param array<int|string, string> $links
+     * @return array<int|string, string>
+     */
+    public function actionLinks(array $links): array
+    {
+        array_unshift($links, sprintf('<a href="%s">%s</a>', esc_url(admin_url('admin.php?page=' . self::PAGE_SLUG)), esc_html__('Settings', 'durabix')));
+
+        return $links;
     }
 
     public function registerMenu(): void
