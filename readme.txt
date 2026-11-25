@@ -2,7 +2,7 @@
 Contributors: motylanogha
 Tags: woocommerce, legal guarantee, garan label, harmonised notice, green claims
 Requires at least: 6.5
-Tested up to: 7.1
+Tested up to: 7.2
 Requires PHP: 8.1
 Stable tag: 1.4.2
 License: GPLv2 or later
