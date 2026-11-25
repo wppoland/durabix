@@ -13,6 +13,12 @@ define('ABSPATH', __DIR__);
 
 require_once __DIR__ . '/../autoload.php';
 
+function plugin_basename(string $file): string
+{
+    return basename($file);
+}
+define('Durabix\PLUGIN_FILE', __FILE__);
+
 $filters = [];
 $menuCap = null;
 
