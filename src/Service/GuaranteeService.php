@@ -175,7 +175,7 @@ final class GuaranteeService implements HasHooks
 
         if ($plainText) {
             if ($hasGoods) {
-                echo "\n" . esc_html__('Your legal guarantee rights', 'durabix') . ': ' . esc_url_raw(HarmonisedNotice::infoUrl($language)) . "\n";
+                echo "\n" . esc_html__('Your legal guarantee rights', 'durabix') . ': ' . esc_html__('the EU notice is attached to this email.', 'durabix') . ' ' . esc_url_raw(HarmonisedNotice::infoUrl($language)) . "\n";
                 if ($this->nationalNote() !== '') {
                     echo esc_html($this->nationalNote()) . "\n";
                 }
