@@ -165,16 +165,8 @@ final class GuaranteeService implements HasHooks
             return;
         }
 
-        $hasGoods = false;
-        foreach ($order->get_items() as $item) {
-            $product = $item instanceof \WC_Order_Item_Product ? $item->get_product() : null;
-            if ($product instanceof \WC_Product && self::showsNotice($product)) {
-                $hasGoods = true;
-                break;
-            }
-        }
         $labels = self::orderGaranLabels($order);
-        $hasGoods = $hasGoods && self::shownIn('email', $order);
+        $hasGoods = self::orderHasGoods($order) && self::shownIn('email', $order);
         if (! $hasGoods && $labels === []) {
             return;
         }
@@ -226,6 +218,14 @@ final class GuaranteeService implements HasHooks
     {
         if (! is_array($attachments) || ! in_array($emailId, self::CONFIRMATION_EMAILS, true) || ! $order instanceof \WC_Order) {
             return $attachments;
+        }
+
+        // The notice itself goes along as a file: an image linked from the shop is not a durable medium.
+        if (self::orderHasGoods($order) && self::shownIn('email', $order)) {
+            $notice = dirname(\Durabix\PLUGIN_FILE) . '/' . HarmonisedNotice::imageFile(HarmonisedNotice::language(determine_locale()));
+            if (is_file($notice)) {
+                $attachments[] = $notice;
+            }
         }
 
         $labels = self::orderGaranLabels($order);
@@ -546,6 +546,18 @@ JS;
         return (bool) apply_filters('durabix_show_notice', true, $context, $object);
     }
 
+    private static function orderHasGoods(\WC_Order $order): bool
+    {
+        foreach ($order->get_items() as $item) {
+            $product = $item instanceof \WC_Order_Item_Product ? $item->get_product() : null;
+            if ($product instanceof \WC_Product && self::showsNotice($product)) {
+                return true;
+            }
+        }
+
+        return false;
+    }
+
     private function cartHasGoods(): bool
     {
         $cart = function_exists('WC') ? WC()->cart : null;
@@ -569,6 +581,11 @@ JS;
      */
     private static function showsNotice(\WC_Product $product): bool
     {
+        // The notice is for goods (Directive 2011/83/EU art. 6(1)(l)); a virtual product is a service or digital content.
+        if ($product->is_virtual()) {
+            return false;
+        }
+
         $parentId = $product->get_parent_id();
         $source   = $parentId > 0 ? wc_get_product($parentId) : $product;
         $source   = $source instanceof \WC_Product ? $source : $product;

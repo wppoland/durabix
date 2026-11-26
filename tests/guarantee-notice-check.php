@@ -236,6 +236,11 @@ class WC_Product
     }
     public string $sku = '';
     public int $parent = 0;
+    public bool $virtual = false;
+    public function is_virtual(): bool
+    {
+        return $this->virtual;
+    }
     public function get_id(): int
     {
         return $this->id;
@@ -441,7 +446,18 @@ function garan_order(): WC_Order
 }
 check('GARAN email: one SVG attached for two variations whose meta sits on the parent', static function (): bool {
     $files = (new GuaranteeService())->attachGaranLabels([], 'customer_processing_order', garan_order(), null);
-    return count($files) === 1 && str_ends_with($files[0], '.svg') && str_contains((string) file_get_contents($files[0]), '>Fairline</tspan>');
+    $svg = array_values(array_filter($files, static fn ($f) => str_ends_with($f, '.svg')));
+    $png = array_values(array_filter($files, static fn ($f) => str_ends_with($f, '.png')));
+    return count($svg) === 1 && str_contains((string) file_get_contents($svg[0]), '>Fairline</tspan>')
+        && count($png) === 1 && str_ends_with($png[0], 'assets/notice/notice-en.png') && is_file($png[0]);
+});
+check('notice email: nothing for an order of virtual products only (services, digital content)', static function (): bool {
+    $p = new WC_Product(77);
+    $p->virtual = true;
+    $order = new WC_Order([new WC_Order_Item_Product($p)]);
+    $email = (object) ['id' => 'customer_processing_order'];
+    $out = render(static fn () => (new GuaranteeService())->renderEmailNotice($order, false, false, $email));
+    return (new GuaranteeService())->attachGaranLabels([], 'customer_processing_order', $order, null) === [] && $out === '';
 });
 check('GARAN email: nothing attached to an admin email', static fn (): bool => (new GuaranteeService())->attachGaranLabels([], 'new_order', garan_order(), null) === []);
 check('GARAN email: the body names the label and the attachment', static function (): bool {
@@ -453,7 +469,7 @@ check('GARAN email: the body names the label and the attachment', static functio
 check('GARAN variation: own duration and model, brand from the parent; email gets two labels', static function (): bool {
     $order = garan_order();
     $GLOBALS['products'][12]->meta = ['_durabix_durability_years' => '10', '_durabix_model_identifier' => 'FL-9'];
-    $files = (new GuaranteeService())->attachGaranLabels([], 'customer_processing_order', $order, null);
+    $files = array_values(array_filter((new GuaranteeService())->attachGaranLabels([], 'customer_processing_order', $order, null), static fn ($f) => str_ends_with($f, '.svg')));
     $all = implode('', array_map(static fn ($f) => (string) file_get_contents($f), $files));
     return count($files) === 2 && str_contains($all, '>10</tspan>') && str_contains($all, '>FL-9</tspan>') && substr_count($all, '>Fairline</tspan>') === 2;
 });
