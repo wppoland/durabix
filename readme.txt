@@ -4,7 +4,7 @@ Tags: woocommerce, legal guarantee, garan label, harmonised notice, green claims
 Requires at least: 6.5
 Tested up to: 7.2
 Requires PHP: 8.1
-Stable tag: 1.5.0
+Stable tag: 1.5.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -89,6 +89,9 @@ The repairability class from the energy label of a smartphone or slate tablet. C
 7. The notice line above the place order button on the block checkout.
 
 == Changelog ==
+
+= 1.5.1 =
+* Plain-text confirmation email says the EU notice is attached, next to the Your Europe link.
 
 = 1.5.0 =
 * The confirmation email attaches the harmonised notice as an image file in the customer's language, so the durable-medium copy no longer depends on an image loaded from the shop.
